@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tier 1 = Bad, Tier 2 = Badder, Tier 3 = Ugly (see scoring in src/lib/scoring.ts)
+model Chemical {
+  id           String   @id @default(cuid())
+  name         String
+  aliases      String[] @default([])
+  severityTier Int      @map("severity_tier")
+  category     String?
+
+  healthEffect         String? @map("health_effect")
+  bannedInCountries    String? @map("banned_in_countries")
+  commonSubstituteNote String? @map("common_substitute_note")
+  sourceNote           String? @map("source_note")
+
+  // Extra fields carried over from the seed spreadsheet (not in the original spec,
+  // kept per request instead of being dropped on import).
+  foundIn        String? @map("found_in")
+  exampleBrands  String? @map("example_brands")
+  timeToManifest String? @map("time_to_manifest")
+
+  // False for broad "concern category" rows (e.g. "Excessive Salt") that aren't a
+  // literal label term -- excluded from automatic ingredient matching so they don't
+  // flag nearly every product. Still visible/editable in admin as informational.
+  matchable Boolean @default(true)
+
+  lastUpdated DateTime @default(now()) @updatedAt @map("last_updated")
+
+  @@map("chemicals")
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  brand          String?
+  country        String?
+  ingredientList String   @map("ingredient_list")
+  score          Int
+  verdict        String
+  lastChecked    DateTime @default(now()) @updatedAt @map("last_checked")
+
+  @@map("products")
+}

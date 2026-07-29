@@ -1,0 +1,15 @@
+node_modules
+.next
+.env
+.env.local
+*.tsbuildinfo
+next-env.d.ts
+
+# Local-only Claude Code settings (machine-specific permission grants)
+.claude/settings.local.json
+
+# Word lock files
+~$*.docx
+
+# Contains real DB credentials / admin password in plaintext -- never commit
+Food scanner app related info.docx
