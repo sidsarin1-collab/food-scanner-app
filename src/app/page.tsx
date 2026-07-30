@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/countries";
 
@@ -56,6 +56,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScoreResult | null>(null);
+
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [showPhotoNotice, setShowPhotoNotice] = useState(false);
 
   const [altState, setAltState] = useState<AltState>("idle");
   const [detectedCategory, setDetectedCategory] = useState<Category | null>(null);
@@ -117,6 +121,32 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
 
+  async function handlePhotoSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    setPhotoLoading(true);
+    setPhotoError(null);
+    setShowPhotoNotice(false);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      const res = await fetch("/api/scan-photo", { method: "POST", body: formData });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.error || "Couldn't read that photo");
+      }
+      setIngredientList(body.ingredientText);
+      setShowPhotoNotice(true);
+      setResult(null);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : "Couldn't read that photo");
+    } finally {
+      setPhotoLoading(false);
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!ingredientList.trim()) return;
@@ -160,12 +190,36 @@ export default function HomePage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <textarea
           value={ingredientList}
-          onChange={(e) => setIngredientList(e.target.value)}
+          onChange={(e) => {
+            setIngredientList(e.target.value);
+            setShowPhotoNotice(false);
+          }}
           placeholder="e.g. Enriched Flour, Sugar, Titanium Dioxide, Red 40, Sodium Benzoate..."
           rows={6}
           className="w-full rounded-lg border border-neutral-300 p-3 text-sm focus:border-neutral-500 focus:outline-none"
           required
         />
+
+        <div className="flex items-center gap-3">
+          <label className="cursor-pointer rounded-lg border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-100">
+            {photoLoading ? "Reading photo..." : "📷 Scan a photo instead"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              capture="environment"
+              onChange={handlePhotoSelected}
+              disabled={photoLoading}
+              className="hidden"
+            />
+          </label>
+          {showPhotoNotice && (
+            <span className="text-xs text-neutral-500">
+              Extracted from your photo — check it&apos;s accurate before continuing.
+            </span>
+          )}
+        </div>
+
+        {photoError && <p className="text-sm text-red-600">{photoError}</p>}
 
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-neutral-600">

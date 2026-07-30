@@ -7,8 +7,7 @@ needed to update the list.
 
 ## Setup
 
-This machine had no Node.js installed, so the code was written but never run or
-type-checked here. Install Node 18+ first, then:
+Requires Node 18+.
 
 ```bash
 npm install
@@ -18,6 +17,7 @@ Create `.env` (copy `.env.example`) and fill in:
 
 - `DATABASE_URL` — your Postgres connection string
 - `ADMIN_PASSWORD` — the shared password for `/admin`
+- `ANTHROPIC_API_KEY` — used server-side only, for photo-based ingredient scanning
 
 Push the schema and seed the chemicals table from the spreadsheet-derived data:
 
@@ -76,6 +76,26 @@ one substance is only counted once even if it matches multiple phrases)
 subtracts: Tier 1 = 5 pts, Tier 2 = 15 pts, Tier 3 = 30 pts, floored at 0.
 Verdict: 70-100 Clean, 40-69 Caution, 0-39 Avoid. See `src/lib/scoring.ts`.
 
+## Cleaner alternatives (Open Food Facts)
+
+When a product scores Caution or Avoid, the checker tries to find up to 5
+Clean-scoring alternatives in the same category/country via the Open Food
+Facts API. Category is auto-detected from the product name if given (matched
+against a curated list in `src/lib/categories.ts`); otherwise a manual
+dropdown is shown. Candidates are scored through *this app's own* chemical DB
+and scoring engine, not Open Food Facts' own scores. If fewer than 3
+Clean-scoring matches exist for the selected country, it shows "limited local
+data" instead of forcing weak suggestions. See `src/lib/offClient.ts` and
+`src/app/api/off/`.
+
+## Photo-based scanning
+
+Users can upload a photo of an ingredient panel instead of typing. The photo
+is sent server-side to Claude's vision API (`src/lib/claudeVision.ts`, using
+`ANTHROPIC_API_KEY` — never exposed to the browser) to extract the ingredient
+text, which is shown in the editable textarea for the user to sanity-check
+before scoring runs. See `src/app/api/scan-photo/route.ts`.
+
 ## Not built (by request)
 
-Payments, user accounts, city/location logic, photo/OCR upload.
+Payments, user accounts, city/location logic.
