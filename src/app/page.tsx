@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { CATEGORIES, type Category } from "@/lib/categories";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/countries";
 
 type FlaggedIngredient = {
   ingredientText: string;
@@ -24,6 +26,15 @@ type ScoreResult = {
   flagged: FlaggedIngredient[];
 };
 
+type Alternative = {
+  name: string;
+  brand: string | null;
+  score: number;
+  code: string | null;
+};
+
+type AltState = "idle" | "detecting" | "need-category" | "loading" | "ok" | "limited" | "error";
+
 const VERDICT_STYLES: Record<ScoreResult["verdict"], string> = {
   Clean: "bg-green-100 text-green-800 border-green-300",
   Caution: "bg-amber-100 text-amber-800 border-amber-300",
@@ -40,10 +51,71 @@ export default function HomePage() {
   const [ingredientList, setIngredientList] = useState("");
   const [name, setName] = useState("");
   const [brand, setBrand] = useState("");
+  const [country, setCountry] = useState(DEFAULT_COUNTRY.offTag);
   const [showDetails, setShowDetails] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ScoreResult | null>(null);
+
+  const [altState, setAltState] = useState<AltState>("idle");
+  const [detectedCategory, setDetectedCategory] = useState<Category | null>(null);
+  const [manualCategoryTag, setManualCategoryTag] = useState(CATEGORIES[0].offTag);
+  const [alternatives, setAlternatives] = useState<Alternative[]>([]);
+
+  async function fetchAlternatives(category: Category) {
+    setAltState("loading");
+    try {
+      const res = await fetch("/api/off/alternatives", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categoryTag: category.offTag, countryTag: country, excludeName: name }),
+      });
+      if (!res.ok) throw new Error("lookup failed");
+      const data: { status: "ok" | "limited"; results: Alternative[] } = await res.json();
+      if (data.status === "ok") {
+        setAlternatives(data.results);
+        setAltState("ok");
+      } else {
+        setAlternatives([]);
+        setAltState("limited");
+      }
+    } catch {
+      setAltState("error");
+    }
+  }
+
+  async function runDetection() {
+    setAltState("detecting");
+    setDetectedCategory(null);
+    if (name.trim()) {
+      try {
+        const res = await fetch("/api/off/detect-category", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const data: { category: Category | null } = await res.json();
+        if (data.category) {
+          setDetectedCategory(data.category);
+          await fetchAlternatives(data.category);
+          return;
+        }
+      } catch {
+        // fall through to manual category selection
+      }
+    }
+    setAltState("need-category");
+  }
+
+  useEffect(() => {
+    if (!result) return;
+    if (result.verdict === "Clean") {
+      setAltState("idle");
+      return;
+    }
+    runDetection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -51,11 +123,18 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setAltState("idle");
+    setAlternatives([]);
     try {
       const res = await fetch("/api/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredientList, name, brand }),
+        body: JSON.stringify({
+          ingredientList,
+          name,
+          brand,
+          country: COUNTRIES.find((c) => c.offTag === country)?.label,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -88,13 +167,30 @@ export default function HomePage() {
           required
         />
 
-        <button
-          type="button"
-          onClick={() => setShowDetails((s) => !s)}
-          className="text-sm text-neutral-500 underline"
-        >
-          {showDetails ? "Hide" : "Add"} product name / brand (optional)
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-neutral-600">
+            Country
+            <select
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="rounded-lg border border-neutral-300 p-1.5 text-sm"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.offTag} value={c.offTag}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setShowDetails((s) => !s)}
+            className="text-sm text-neutral-500 underline"
+          >
+            {showDetails ? "Hide" : "Add"} product name / brand (optional)
+          </button>
+        </div>
 
         {showDetails && (
           <div className="grid grid-cols-2 gap-3">
@@ -167,6 +263,83 @@ export default function HomePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {result.verdict !== "Clean" && (
+            <div className="space-y-3 border-t border-neutral-200 pt-6">
+              <h2 className="font-semibold">Cleaner alternatives</h2>
+
+              {altState === "detecting" && (
+                <p className="text-sm text-neutral-500">Looking up this product&apos;s category...</p>
+              )}
+
+              {altState === "loading" && (
+                <p className="text-sm text-neutral-500">Searching Open Food Facts for alternatives...</p>
+              )}
+
+              {altState === "need-category" && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm text-neutral-600">
+                    Couldn&apos;t auto-detect the category{name.trim() ? "" : " (no product name given)"} — pick one:
+                  </p>
+                  <select
+                    value={manualCategoryTag}
+                    onChange={(e) => setManualCategoryTag(e.target.value)}
+                    className="rounded-lg border border-neutral-300 p-1.5 text-sm"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c.offTag} value={c.offTag}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      const cat = CATEGORIES.find((c) => c.offTag === manualCategoryTag);
+                      if (cat) fetchAlternatives(cat);
+                    }}
+                    className="rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white"
+                  >
+                    Find alternatives
+                  </button>
+                </div>
+              )}
+
+              {altState === "error" && (
+                <p className="text-sm text-red-600">Couldn&apos;t reach Open Food Facts right now.</p>
+              )}
+
+              {altState === "limited" && (
+                <p className="text-sm text-neutral-600">
+                  Limited local data — not enough verified Clean-scoring alternatives found for{" "}
+                  {COUNTRIES.find((c) => c.offTag === country)?.label} in this category yet.
+                </p>
+              )}
+
+              {altState === "ok" && (
+                <div className="space-y-2">
+                  {detectedCategory && (
+                    <p className="text-xs text-neutral-500">
+                      Category: {detectedCategory.label} (auto-detected)
+                    </p>
+                  )}
+                  {alternatives.map((alt, i) => (
+                    <div
+                      key={`${alt.name}-${i}`}
+                      className="flex items-center justify-between rounded-lg border border-neutral-200 p-3"
+                    >
+                      <div>
+                        <div className="font-medium">{alt.name}</div>
+                        {alt.brand && <div className="text-xs text-neutral-500">{alt.brand}</div>}
+                      </div>
+                      <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                        {alt.score} · Clean
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

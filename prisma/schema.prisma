@@ -41,6 +41,7 @@ model Product {
   name           String
   brand          String?
   country        String?
+  category       String? // Open Food Facts category tag used for alternative lookups (Phase 2)
   ingredientList String   @map("ingredient_list")
   score          Int
   verdict        String
