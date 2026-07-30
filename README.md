@@ -96,6 +96,27 @@ is sent server-side to Claude's vision API (`src/lib/claudeVision.ts`, using
 text, which is shown in the editable textarea for the user to sanity-check
 before scoring runs. See `src/app/api/scan-photo/route.ts`.
 
+## Anonymous usage analytics
+
+A plain-language notice (bottom of every page, `src/components/AnalyticsNotice.tsx`)
+describes exactly what's collected before any tracking starts. Nothing is
+logged until the user clicks "Got it" -- no session cookie is even created
+before that. Once acknowledged:
+
+- A random UUID is set in a `scanner_session` cookie (no login, name, or email
+  tied to it).
+- Events log to the `events` table: session ID, timestamp, the product name
+  (or a SHA-256 hash of the ingredient list if it wasn't named -- the raw text
+  is never stored in this table), the verdict shown, the action
+  (`viewed` / `clicked_alternative` / `dismissed`), and the country the user
+  picked from the existing dropdown (never GPS/precise location).
+- No third-party analytics or ad scripts are used -- see `src/lib/analytics.ts`
+  and `src/app/api/events/route.ts`.
+
+"Clicked_alternative" fires when a suggested alternative (now a link to its
+Open Food Facts product page) is clicked; "dismissed" fires from the new
+"Clear results" button; "viewed" fires when a score result is shown.
+
 ## Not built (by request)
 
 Payments, user accounts, city/location logic.

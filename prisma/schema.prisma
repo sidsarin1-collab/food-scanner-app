@@ -49,3 +49,18 @@ model Product {
 
   @@map("products")
 }
+
+// Anonymous usage analytics -- session_id is a random UUID from a browser
+// cookie, never tied to a login/name/email. No tracking happens until the
+// user has acknowledged the notice in src/components/AnalyticsNotice.tsx.
+model Event {
+  id             String   @id @default(cuid())
+  sessionId      String   @map("session_id")
+  timestamp      DateTime @default(now())
+  productScanned String?  @map("product_scanned") // product name, or a SHA-256 hash of the ingredient list if unnamed
+  verdictShown   String?  @map("verdict_shown")
+  action         String // "viewed" | "clicked_alternative" | "dismissed"
+  country        String? // self-selected from the checker's country dropdown, never GPS
+
+  @@map("events")
+}

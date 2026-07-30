@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import AnalyticsNotice from "@/components/AnalyticsNotice";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>
+        <AnalyticsNotice />
       </body>
     </html>
   );

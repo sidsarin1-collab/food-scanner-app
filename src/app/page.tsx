@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/countries";
+import { trackEvent } from "@/lib/analytics";
 
 type FlaggedIngredient = {
   ingredientText: string;
@@ -170,12 +171,39 @@ export default function HomePage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Something went wrong");
       }
-      setResult(await res.json());
+      const data: ScoreResult = await res.json();
+      setResult(data);
+      const countryLabel = COUNTRIES.find((c) => c.offTag === country)?.label;
+      trackEvent({ action: "viewed", name, ingredientList, verdictShown: data.verdict, country: countryLabel });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleClearResults() {
+    if (result) {
+      const countryLabel = COUNTRIES.find((c) => c.offTag === country)?.label;
+      trackEvent({ action: "dismissed", name, ingredientList, verdictShown: result.verdict, country: countryLabel });
+    }
+    setResult(null);
+    setIngredientList("");
+    setName("");
+    setBrand("");
+    setShowPhotoNotice(false);
+    setAltState("idle");
+    setAlternatives([]);
+  }
+
+  function handleAlternativeClick(alt: Alternative) {
+    const countryLabel = COUNTRIES.find((c) => c.offTag === country)?.label;
+    trackEvent({
+      action: "clicked_alternative",
+      name: alt.name,
+      verdictShown: result?.verdict,
+      country: countryLabel,
+    });
   }
 
   return (
@@ -286,6 +314,9 @@ export default function HomePage() {
             <span className="text-sm text-neutral-500">
               {result.ingredientCount} ingredient phrase{result.ingredientCount === 1 ? "" : "s"} scanned
             </span>
+            <button onClick={handleClearResults} className="ml-auto text-sm text-neutral-500 underline">
+              Clear results
+            </button>
           </div>
 
           {result.flagged.length === 0 ? (
@@ -378,20 +409,33 @@ export default function HomePage() {
                       Category: {detectedCategory.label} (auto-detected)
                     </p>
                   )}
-                  {alternatives.map((alt, i) => (
-                    <div
-                      key={`${alt.name}-${i}`}
-                      className="flex items-center justify-between rounded-lg border border-neutral-200 p-3"
-                    >
-                      <div>
-                        <div className="font-medium">{alt.name}</div>
-                        {alt.brand && <div className="text-xs text-neutral-500">{alt.brand}</div>}
+                  {alternatives.map((alt, i) => {
+                    const card = (
+                      <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 hover:bg-neutral-50">
+                        <div>
+                          <div className="font-medium">{alt.name}</div>
+                          {alt.brand && <div className="text-xs text-neutral-500">{alt.brand}</div>}
+                        </div>
+                        <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                          {alt.score} · Clean
+                        </span>
                       </div>
-                      <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                        {alt.score} · Clean
-                      </span>
-                    </div>
-                  ))}
+                    );
+                    return alt.code ? (
+                      <a
+                        key={`${alt.name}-${i}`}
+                        href={`https://world.openfoodfacts.org/product/${alt.code}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => handleAlternativeClick(alt)}
+                        className="block"
+                      >
+                        {card}
+                      </a>
+                    ) : (
+                      <div key={`${alt.name}-${i}`}>{card}</div>
+                    );
+                  })}
                 </div>
               )}
             </div>
