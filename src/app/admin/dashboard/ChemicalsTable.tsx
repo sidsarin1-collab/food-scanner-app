@@ -2,6 +2,7 @@
 
 import { Dispatch, Fragment, ReactNode, SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Chemical = {
   id: string;
@@ -186,6 +187,9 @@ export default function ChemicalsTable() {
           >
             + Add chemical
           </button>
+          <Link href="/dashboard" className="text-sm text-neutral-500 underline">
+            Dashboard
+          </Link>
           <button onClick={handleLogout} className="text-sm text-neutral-500 underline">
             Log out
           </button>

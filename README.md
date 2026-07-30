@@ -117,6 +117,31 @@ before that. Once acknowledged:
 Open Food Facts product page) is clicked; "dismissed" fires from the new
 "Clear results" button; "viewed" fires when a score result is shown.
 
+## Dashboard
+
+`/dashboard` (same admin password as `/admin`) shows four aggregate SQL
+reports, computed with raw `$queryRaw` in `src/lib/dashboardStats.ts`:
+
+- **Most-scanned products this week** -- `products` grouped by name, last 7
+  days (excludes the "Untitled product" placeholder).
+- **Top 10 most-frequently-flagged chemicals** -- neither `events` nor
+  `products` originally stored *which* chemicals were flagged per scan, only
+  the final score/verdict, so this metric wasn't answerable yet. Rather than
+  add a new join table, `products` got one new column,
+  `flagged_chemical_ids String[]`, populated by `/api/score` going forward and
+  aggregated with Postgres `unnest()`. Existing rows were backfilled by
+  re-scoring their stored `ingredientList` against *today's* chemical rules
+  (`prisma/backfill-flagged-chemicals.ts`) -- an approximation of history, not
+  an exact replay of what the database looked like at scan time.
+- **Clean/Caution/Avoid ratio over time** -- `products`, grouped by verdict per
+  week, last 12 weeks.
+- **Scans by country** -- `products.country`, all-time.
+
+All four intentionally read from `products`, not `events`: `products` gets a
+row on every scan unconditionally, while `events` only has data for sessions
+that accepted the analytics notice -- using `events` here would silently
+undercount and skew these numbers.
+
 ## Not built (by request)
 
 Payments, user accounts, city/location logic.

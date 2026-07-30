@@ -47,6 +47,10 @@ model Product {
   verdict        String
   lastChecked    DateTime @default(now()) @updatedAt @map("last_checked")
 
+  // Chemical ids flagged for this scan (Phase 5 dashboard: enables
+  // `SELECT unnest(flagged_chemical_ids) ...` aggregation without a join table).
+  flaggedChemicalIds String[] @default([]) @map("flagged_chemical_ids")
+
   @@map("products")
 }
 

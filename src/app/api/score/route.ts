@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       ingredientList,
       score: result.score,
       verdict: result.verdict,
+      flaggedChemicalIds: result.flagged.map((f) => f.chemicalId),
     },
   });
 
