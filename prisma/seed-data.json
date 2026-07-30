@@ -1452,5 +1452,92 @@
     "time_to_manifest": "Long-term",
     "matchable": true,
     "orig_num": 69
+  },
+  {
+    "name": "Cottonseed Oil",
+    "aliases": [
+      "Refined Cottonseed Oil"
+    ],
+    "severity_tier": 2,
+    "category": "Fat/Oil",
+    "health_effect": "High omega-6, heavily refined/bleached, trace gossypol residue, often GMO-sourced. Pro-inflammatory with regular use.",
+    "banned_in_countries": null,
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-cottonseed-oil"
+  },
+  {
+    "name": "Soybean Oil",
+    "aliases": [
+      "Refined Soybean Oil",
+      "Vegetable Oil"
+    ],
+    "severity_tier": 2,
+    "category": "Fat/Oil",
+    "health_effect": "High omega-6, typically GMO-sourced, heavily refined. Pro-inflammatory with regular use, skews omega-6:3 ratio.",
+    "banned_in_countries": null,
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-soybean-oil"
+  },
+  {
+    "name": "Canola Oil",
+    "aliases": [
+      "Rapeseed Oil"
+    ],
+    "severity_tier": 2,
+    "category": "Fat/Oil",
+    "health_effect": "Often GMO-sourced, heavily refined using hexane solvent extraction. High omega-6 relative to traditional oils.",
+    "banned_in_countries": null,
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-canola-oil"
+  },
+  {
+    "name": "Sunflower Oil",
+    "aliases": [
+      "Refined Sunflower Oil"
+    ],
+    "severity_tier": 2,
+    "category": "Fat/Oil",
+    "health_effect": "Standard (non-high-oleic) sunflower oil is high in omega-6, pro-inflammatory with regular use. Note: high-oleic sunflower oil is a materially different, better profile -- flag this distinction in the admin note if the ingredient list doesn't specify which type.",
+    "banned_in_countries": null,
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-sunflower-oil"
+  },
+  {
+    "name": "Maltodextrin",
+    "aliases": [
+      "Modified Maltodextrin",
+      "Corn Maltodextrin"
+    ],
+    "severity_tier": 1,
+    "category": "Processed Filler",
+    "health_effect": "GRAS (not banned or restricted anywhere) but a nutrient-empty processed starch filler with a glycemic index often higher than table sugar. Flagged for glycemic/processing concern, not toxicity.",
+    "banned_in_countries": "None",
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-maltodextrin"
   }
 ]
