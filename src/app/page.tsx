@@ -48,12 +48,30 @@ const NOVA_GROUP_STYLES: Record<number, string> = {
   3: "bg-amber-100 text-amber-800 border-amber-300",
 };
 
+// Every alternative shown here already passed the Ingredient-Safe (Clean)
+// additive-score bar -- that's a precondition for appearing at all -- so the
+// only thing that actually varies is processing level. NOVA 4 is filtered
+// out upstream, so only 1-3 (or missing) ever reach this.
+function summarizeAlternative(novaGroup: number | null): string {
+  if (novaGroup === null) return "Clean ingredients.";
+  if (novaGroup <= 2) return "Clean ingredients and minimally processed.";
+  return "Clean ingredients, but processed.";
+}
+
 type AltState = "idle" | "detecting" | "need-category" | "loading" | "ok" | "limited" | "error";
 
 const VERDICT_STYLES: Record<ScoreResult["verdict"], string> = {
   Clean: "bg-green-100 text-green-800 border-green-300",
   Caution: "bg-amber-100 text-amber-800 border-amber-300",
   Avoid: "bg-red-100 text-red-800 border-red-300",
+};
+
+// Display-only labels -- the underlying verdict value ("Clean") stays as-is
+// everywhere else (API contract, styling lookups, internal logic).
+const VERDICT_LABELS: Record<ScoreResult["verdict"], string> = {
+  Clean: "Ingredient-Safe",
+  Caution: "Caution",
+  Avoid: "Avoid",
 };
 
 const TIER_STYLES: Record<number, string> = {
@@ -81,16 +99,29 @@ export default function HomePage() {
   const [manualCategoryTag, setManualCategoryTag] = useState(CATEGORIES[0].offTag);
   const [alternatives, setAlternatives] = useState<Alternative[]>([]);
 
+  async function requestAlternatives(category: Category): Promise<{ status: "ok" | "limited"; results: Alternative[] }> {
+    const res = await fetch("/api/off/alternatives", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryTag: category.offTag, countryTag: country, excludeName: name }),
+    });
+    if (!res.ok) throw new Error("lookup failed");
+    return res.json();
+  }
+
   async function fetchAlternatives(category: Category) {
     setAltState("loading");
     try {
-      const res = await fetch("/api/off/alternatives", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categoryTag: category.offTag, countryTag: country, excludeName: name }),
-      });
-      if (!res.ok) throw new Error("lookup failed");
-      const data: { status: "ok" | "limited"; results: Alternative[] } = await res.json();
+      let data: { status: "ok" | "limited"; results: Alternative[] };
+      try {
+        data = await requestAlternatives(category);
+      } catch {
+        // Open Food Facts is occasionally transiently flaky (rate limits,
+        // brief 5xx blips) -- one silent retry clears most of those before
+        // the user ever sees an error.
+        await new Promise((r) => setTimeout(r, 1000));
+        data = await requestAlternatives(category);
+      }
       if (data.status === "ok") {
         setAlternatives(data.results);
         setAltState("ok");
@@ -322,7 +353,7 @@ export default function HomePage() {
             <span
               className={`rounded-full border px-3 py-1 text-sm font-semibold ${VERDICT_STYLES[result.verdict]}`}
             >
-              {result.verdict}
+              {VERDICT_LABELS[result.verdict]}
             </span>
             <span className="text-sm text-neutral-500">
               {result.ingredientCount} ingredient phrase{result.ingredientCount === 1 ? "" : "s"} scanned
@@ -367,6 +398,10 @@ export default function HomePage() {
           {result.verdict !== "Clean" && (
             <div className="space-y-3 border-t border-neutral-200 pt-6">
               <h2 className="font-semibold">Cleaner alternatives</h2>
+              <p className="text-xs text-neutral-500">
+                Ingredient-Safe score reflects additive safety only — check Nutri-Score and NOVA
+                badges for nutrition and processing level.
+              </p>
 
               {altState === "detecting" && (
                 <p className="text-sm text-neutral-500">Looking up this product&apos;s category...</p>
@@ -410,7 +445,7 @@ export default function HomePage() {
 
               {altState === "limited" && (
                 <p className="text-sm text-neutral-600">
-                  Limited local data — not enough verified Clean-scoring alternatives found for{" "}
+                  Limited local data — not enough verified Ingredient-Safe alternatives found for{" "}
                   {COUNTRIES.find((c) => c.offTag === country)?.label} in this category yet.
                 </p>
               )}
@@ -424,12 +459,13 @@ export default function HomePage() {
                   )}
                   {alternatives.map((alt, i) => {
                     const card = (
-                      <div className="flex items-center justify-between rounded-lg border border-neutral-200 p-3 hover:bg-neutral-50">
+                      <div className="rounded-lg border border-neutral-200 p-3 hover:bg-neutral-50">
                         <div>
                           <div className="font-medium">{alt.name}</div>
                           {alt.brand && <div className="text-xs text-neutral-500">{alt.brand}</div>}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <p className="mt-1.5 text-sm text-neutral-700">{summarizeAlternative(alt.novaGroup)}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           {alt.nutritionGrade && (
                             <span
                               className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
@@ -453,7 +489,7 @@ export default function HomePage() {
                             </span>
                           )}
                           <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                            {alt.score} · Clean
+                            {alt.score} · Ingredient-Safe
                           </span>
                         </div>
                       </div>
