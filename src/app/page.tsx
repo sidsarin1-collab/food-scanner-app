@@ -32,6 +32,13 @@ type Alternative = {
   brand: string | null;
   score: number;
   code: string | null;
+  nutritionGrade: string | null;
+};
+
+const NUTRITION_GRADE_STYLES: Record<string, string> = {
+  A: "bg-green-100 text-green-800 border-green-300",
+  B: "bg-lime-100 text-lime-800 border-lime-300",
+  C: "bg-amber-100 text-amber-800 border-amber-300",
 };
 
 type AltState = "idle" | "detecting" | "need-category" | "loading" | "ok" | "limited" | "error";
@@ -415,9 +422,22 @@ export default function HomePage() {
                           <div className="font-medium">{alt.name}</div>
                           {alt.brand && <div className="text-xs text-neutral-500">{alt.brand}</div>}
                         </div>
-                        <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                          {alt.score} · Clean
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {alt.nutritionGrade && (
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                                NUTRITION_GRADE_STYLES[alt.nutritionGrade] ??
+                                "bg-neutral-100 text-neutral-700 border-neutral-300"
+                              }`}
+                              title="Open Food Facts Nutri-Score"
+                            >
+                              Nutri-Score {alt.nutritionGrade}
+                            </span>
+                          )}
+                          <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                            {alt.score} · Clean
+                          </span>
+                        </div>
                       </div>
                     );
                     return alt.code ? (

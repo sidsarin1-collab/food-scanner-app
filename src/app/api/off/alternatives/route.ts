@@ -8,6 +8,13 @@ import { findCountryByOffTag } from "@/lib/countries";
 const MIN_RESULTS = 3;
 const MAX_RESULTS = 5;
 const CLEAN_THRESHOLD = 70;
+const EXCLUDED_NUTRITION_GRADES = new Set(["d", "e"]);
+
+/** OFF sometimes has product_name set to a raw barcode (contributor data-entry
+ * gap) rather than left empty -- a plain numeric string isn't a real name. */
+function looksLikeBarcode(name: string): boolean {
+  return /^\d{6,14}$/.test(name);
+}
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -48,16 +55,28 @@ export async function POST(req: Request) {
     typeof excludeName === "string" && excludeName.trim() ? excludeName.trim().toLowerCase() : null;
 
   const seen = new Set<string>();
-  const cleanMatches: { name: string; brand: string | null; score: number; code: string | null }[] = [];
+  const cleanMatches: {
+    name: string;
+    brand: string | null;
+    score: number;
+    code: string | null;
+    nutritionGrade: string | null;
+  }[] = [];
 
   for (const product of candidates) {
     const ingredientsText = product.ingredients_text?.trim();
     const name = product.product_name?.trim();
-    if (!ingredientsText || !name) continue;
+    if (!ingredientsText || !name || looksLikeBarcode(name)) continue;
 
     const dedupeKey = `${name.toLowerCase()}|${(product.brands ?? "").toLowerCase()}`;
     if (seen.has(dedupeKey)) continue;
     if (excludeNormalized && name.toLowerCase() === excludeNormalized) continue;
+
+    // Require a Nutri-Score of A/B/C when one is present; a good additive score
+    // alone shouldn't surface a nutritionally poor (D/E) product as "cleaner."
+    // Missing data isn't treated as a fail -- there's nothing to exclude on.
+    const rawGrade = product.nutrition_grades?.trim().toLowerCase();
+    if (rawGrade && EXCLUDED_NUTRITION_GRADES.has(rawGrade)) continue;
 
     const result = scoreIngredientList(ingredientsText, chemicals);
     if (result.verdict !== "Clean") continue;
@@ -68,6 +87,7 @@ export async function POST(req: Request) {
       brand: product.brands?.split(",")[0]?.trim() || null,
       score: result.score,
       code: product.code ?? null,
+      nutritionGrade: rawGrade ? rawGrade.toUpperCase() : null,
     });
   }
 
