@@ -8,6 +8,7 @@ import { findCountryByOffTag } from "@/lib/countries";
 const MIN_RESULTS = 3;
 const MAX_RESULTS = 5;
 const CLEAN_THRESHOLD = 70;
+const VALID_NUTRITION_GRADES = new Set(["a", "b", "c", "d", "e"]);
 const EXCLUDED_NUTRITION_GRADES = new Set(["d", "e"]);
 const EXCLUDED_NOVA_GROUPS = new Set([4]);
 
@@ -77,7 +78,11 @@ export async function POST(req: Request) {
     // Require a Nutri-Score of A/B/C when one is present; a good additive score
     // alone shouldn't surface a nutritionally poor (D/E) product as "cleaner."
     // Missing data isn't treated as a fail -- there's nothing to exclude on.
-    const rawGrade = product.nutrition_grades?.trim().toLowerCase();
+    // OFF sometimes returns the literal string "unknown" (or other non-grade
+    // values) instead of omitting the field -- treat anything that isn't a
+    // real a/b/c/d/e grade the same as missing, not as a value to display.
+    const normalizedGrade = product.nutrition_grades?.trim().toLowerCase();
+    const rawGrade = normalizedGrade && VALID_NUTRITION_GRADES.has(normalizedGrade) ? normalizedGrade : null;
     if (rawGrade && EXCLUDED_NUTRITION_GRADES.has(rawGrade)) continue;
 
     // Same rule for NOVA processing group: exclude ultra-processed (4) even
