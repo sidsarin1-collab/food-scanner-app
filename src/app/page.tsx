@@ -66,13 +66,13 @@ const VERDICT_STYLES: Record<ScoreResult["verdict"], string> = {
   Avoid: "bg-red-100 text-red-800 border-red-300",
 };
 
-// Display-only labels -- the underlying verdict value ("Clean") stays as-is
-// everywhere else (API contract, styling lookups, internal logic).
-const VERDICT_LABELS: Record<ScoreResult["verdict"], string> = {
-  Clean: "Ingredient-Safe",
-  Caution: "Caution",
-  Avoid: "Avoid",
-};
+// Show alternatives whenever the overall score is under 75 OR any single
+// flagged ingredient is Tier 2/3 -- a product can average out to a decent
+// score while still containing one seriously flagged additive, and that
+// case deserves alternatives just as much as a low overall score does.
+function shouldShowAlternatives(result: ScoreResult): boolean {
+  return result.score < 75 || result.flagged.some((f) => f.severityTier === 2 || f.severityTier === 3);
+}
 
 const TIER_STYLES: Record<number, string> = {
   1: "bg-yellow-100 text-yellow-800",
@@ -159,7 +159,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!result) return;
-    if (result.verdict === "Clean") {
+    if (!shouldShowAlternatives(result)) {
       setAltState("idle");
       return;
     }
@@ -348,19 +348,28 @@ export default function HomePage() {
 
       {result && (
         <div className="space-y-6 border-t border-neutral-200 pt-6">
-          <div className="flex items-center gap-4">
-            <div className="text-4xl font-bold">{result.score}</div>
-            <span
-              className={`rounded-full border px-3 py-1 text-sm font-semibold ${VERDICT_STYLES[result.verdict]}`}
-            >
-              {VERDICT_LABELS[result.verdict]}
-            </span>
-            <span className="text-sm text-neutral-500">
-              {result.ingredientCount} ingredient phrase{result.ingredientCount === 1 ? "" : "s"} scanned
-            </span>
-            <button onClick={handleClearResults} className="ml-auto text-sm text-neutral-500 underline">
-              Clear results
-            </button>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+              Chemical Safety Score
+            </p>
+            <div className="mt-1 flex items-center gap-4">
+              <div className="text-4xl font-bold">{result.score}</div>
+              <span
+                className={`rounded-full border px-3 py-1 text-sm font-semibold ${VERDICT_STYLES[result.verdict]}`}
+              >
+                {result.verdict}
+              </span>
+              <span className="text-sm text-neutral-500">
+                {result.ingredientCount} ingredient phrase{result.ingredientCount === 1 ? "" : "s"} scanned
+              </span>
+              <button onClick={handleClearResults} className="ml-auto text-sm text-neutral-500 underline">
+                Clear results
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-neutral-500">
+              Chemical Safety Score: 70-100 Clean, 40-69 Caution, 0-39 Avoid — additive safety only.
+              Nutri-Score (A-E, nutrition) and NOVA (1-4, processing level) are independent signals.
+            </p>
           </div>
 
           {result.flagged.length === 0 ? (
@@ -395,12 +404,12 @@ export default function HomePage() {
             </div>
           )}
 
-          {result.verdict !== "Clean" && (
+          {shouldShowAlternatives(result) && (
             <div className="space-y-3 border-t border-neutral-200 pt-6">
               <h2 className="font-semibold">Cleaner alternatives</h2>
               <p className="text-xs text-neutral-500">
-                Ingredient-Safe score reflects additive safety only — check Nutri-Score and NOVA
-                badges for nutrition and processing level.
+                Nutri-Score (A-E) = nutritional quality. NOVA (1-4) = processing level, 4 is
+                ultra-processed. Both independent of the Chemical Safety Score above.
               </p>
 
               {altState === "detecting" && (
@@ -445,7 +454,7 @@ export default function HomePage() {
 
               {altState === "limited" && (
                 <p className="text-sm text-neutral-600">
-                  Limited local data — not enough verified Ingredient-Safe alternatives found for{" "}
+                  Limited local data — not enough alternatives with a high Chemical Safety Score found for{" "}
                   {COUNTRIES.find((c) => c.offTag === country)?.label} in this category yet.
                 </p>
               )}
@@ -488,8 +497,11 @@ export default function HomePage() {
                               NOVA {alt.novaGroup}
                             </span>
                           )}
-                          <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                            {alt.score} · Ingredient-Safe
+                          <span
+                            className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800"
+                            title="Chemical Safety Score (additive safety)"
+                          >
+                            Chemical Safety Score {alt.score}
                           </span>
                         </div>
                       </div>
