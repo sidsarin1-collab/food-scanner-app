@@ -33,12 +33,19 @@ type Alternative = {
   score: number;
   code: string | null;
   nutritionGrade: string | null;
+  novaGroup: number | null;
 };
 
 const NUTRITION_GRADE_STYLES: Record<string, string> = {
   A: "bg-green-100 text-green-800 border-green-300",
   B: "bg-lime-100 text-lime-800 border-lime-300",
   C: "bg-amber-100 text-amber-800 border-amber-300",
+};
+
+const NOVA_GROUP_STYLES: Record<number, string> = {
+  1: "bg-green-100 text-green-800 border-green-300",
+  2: "bg-lime-100 text-lime-800 border-lime-300",
+  3: "bg-amber-100 text-amber-800 border-amber-300",
 };
 
 type AltState = "idle" | "detecting" | "need-category" | "loading" | "ok" | "limited" | "error";
@@ -432,6 +439,17 @@ export default function HomePage() {
                               title="Open Food Facts Nutri-Score"
                             >
                               Nutri-Score {alt.nutritionGrade}
+                            </span>
+                          )}
+                          {alt.novaGroup !== null && (
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                                NOVA_GROUP_STYLES[alt.novaGroup] ??
+                                "bg-neutral-100 text-neutral-700 border-neutral-300"
+                              }`}
+                              title="Open Food Facts NOVA processing group"
+                            >
+                              NOVA {alt.novaGroup}
                             </span>
                           )}
                           <span className="rounded-full border border-green-300 bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">

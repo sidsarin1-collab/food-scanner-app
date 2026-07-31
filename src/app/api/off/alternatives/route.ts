@@ -9,6 +9,7 @@ const MIN_RESULTS = 3;
 const MAX_RESULTS = 5;
 const CLEAN_THRESHOLD = 70;
 const EXCLUDED_NUTRITION_GRADES = new Set(["d", "e"]);
+const EXCLUDED_NOVA_GROUPS = new Set([4]);
 
 /** OFF sometimes has product_name set to a raw barcode (contributor data-entry
  * gap) rather than left empty -- a plain numeric string isn't a real name. */
@@ -61,6 +62,7 @@ export async function POST(req: Request) {
     score: number;
     code: string | null;
     nutritionGrade: string | null;
+    novaGroup: number | null;
   }[] = [];
 
   for (const product of candidates) {
@@ -78,6 +80,12 @@ export async function POST(req: Request) {
     const rawGrade = product.nutrition_grades?.trim().toLowerCase();
     if (rawGrade && EXCLUDED_NUTRITION_GRADES.has(rawGrade)) continue;
 
+    // Same rule for NOVA processing group: exclude ultra-processed (4) even
+    // with a perfect additive score and a good Nutri-Score, but don't
+    // hard-exclude when OFF has no NOVA classification for this product.
+    const novaGroup = typeof product.nova_group === "number" ? product.nova_group : null;
+    if (novaGroup !== null && EXCLUDED_NOVA_GROUPS.has(novaGroup)) continue;
+
     const result = scoreIngredientList(ingredientsText, chemicals);
     if (result.verdict !== "Clean") continue;
 
@@ -88,6 +96,7 @@ export async function POST(req: Request) {
       score: result.score,
       code: product.code ?? null,
       nutritionGrade: rawGrade ? rawGrade.toUpperCase() : null,
+      novaGroup,
     });
   }
 

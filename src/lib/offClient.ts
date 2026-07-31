@@ -9,6 +9,7 @@ export type OffProduct = {
   categories_tags?: string[];
   countries_tags?: string[];
   nutrition_grades?: string;
+  nova_group?: number;
 };
 
 type CacheEntry = { data: unknown; expiresAt: number };
@@ -68,7 +69,7 @@ export async function searchProductsByCategoryAndCountry(
     tagtype_1: "countries",
     tag_contains_1: "contains",
     tag_1: countryTag,
-    fields: "product_name,brands,ingredients_text,code,categories_tags,countries_tags,nutrition_grades",
+    fields: "product_name,brands,ingredients_text,code,categories_tags,countries_tags,nutrition_grades,nova_group",
   })) as { products?: OffProduct[] };
   return data.products ?? [];
 }
