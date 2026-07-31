@@ -234,7 +234,6 @@ export default function HomePage() {
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
-              capture="environment"
               onChange={handlePhotoSelected}
               disabled={photoLoading}
               className="hidden"
