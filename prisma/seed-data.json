@@ -16,7 +16,9 @@
   },
   {
     "name": "Potassium Bromate",
-    "aliases": [],
+    "aliases": [
+      "INS 924a"
+    ],
     "severity_tier": 1,
     "category": "Bleaching/Dough Agent",
     "health_effect": "IARC Group 2B carcinogen; kidney tumors, thyroid tumors, peritoneal mesothelioma in animal studies; DNA oxidative damage, renal failure",
@@ -32,7 +34,8 @@
   {
     "name": "Azodicarbonamide",
     "aliases": [
-      "ADA"
+      "ADA",
+      "INS 927a"
     ],
     "severity_tier": 1,
     "category": "Bleaching/Dough Agent",
@@ -49,7 +52,8 @@
   {
     "name": "Erythrosine",
     "aliases": [
-      "Red Dye No. 3"
+      "Red Dye No. 3",
+      "INS 127"
     ],
     "severity_tier": 1,
     "category": "Artificial Color/Dye",
@@ -66,7 +70,8 @@
   {
     "name": "Brominated Vegetable Oil",
     "aliases": [
-      "BVO"
+      "BVO",
+      "INS 443"
     ],
     "severity_tier": 1,
     "category": "Flavor Enhancer",
@@ -83,7 +88,8 @@
   {
     "name": "Titanium Dioxide",
     "aliases": [
-      "E171"
+      "E171",
+      "INS 171"
     ],
     "severity_tier": 1,
     "category": "Artificial Color/Dye",
@@ -166,7 +172,8 @@
   {
     "name": "BHT",
     "aliases": [
-      "Butylated Hydroxytoluene"
+      "Butylated Hydroxytoluene",
+      "INS 321"
     ],
     "severity_tier": 1,
     "category": "Preservative",
@@ -183,7 +190,8 @@
   {
     "name": "BHA",
     "aliases": [
-      "Butylated Hydroxyanisole"
+      "Butylated Hydroxyanisole",
+      "INS 320"
     ],
     "severity_tier": 1,
     "category": "Preservative",
@@ -200,7 +208,8 @@
   {
     "name": "TBHQ",
     "aliases": [
-      "Tert-Butylhydroquinone"
+      "Tert-Butylhydroquinone",
+      "INS 319"
     ],
     "severity_tier": 1,
     "category": "Preservative",
@@ -216,7 +225,9 @@
   },
   {
     "name": "Cyclamates",
-    "aliases": [],
+    "aliases": [
+      "INS 952"
+    ],
     "severity_tier": 1,
     "category": "Sweetener",
     "health_effect": "Bladder cancer in animal studies (basis for US ban); possible carcinogen",
@@ -394,7 +405,8 @@
   {
     "name": "Sodium Nitrite",
     "aliases": [
-      "Nitrate"
+      "Nitrate",
+      "INS 250"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -410,7 +422,9 @@
   },
   {
     "name": "Aspartame",
-    "aliases": [],
+    "aliases": [
+      "INS 951"
+    ],
     "severity_tier": 2,
     "category": "Sweetener",
     "health_effect": "IARC Group 2B (possibly carcinogenic) July 2023; neuropsychiatric effects at high doses; headaches; contraindicated in phenylketonuria; possible lymphoma/myeloma link",
@@ -425,7 +439,9 @@
   },
   {
     "name": "Carrageenan",
-    "aliases": [],
+    "aliases": [
+      "INS 407"
+    ],
     "severity_tier": 2,
     "category": "Emulsifier/Thickener",
     "health_effect": "Gut inflammation; linked to colitis and IBS in animal studies; intestinal permeability concerns",
@@ -441,7 +457,8 @@
   {
     "name": "Polysorbate 80",
     "aliases": [
-      "E433"
+      "E433",
+      "INS 433"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -551,7 +568,9 @@
   },
   {
     "name": "Ethoxyquin",
-    "aliases": [],
+    "aliases": [
+      "INS 324"
+    ],
     "severity_tier": 2,
     "category": "Other Additive",
     "health_effect": "Liver toxicity; carcinogenicity concern; thyroid disruption; EU suspended use due to data gaps 2017",
@@ -690,7 +709,9 @@
   },
   {
     "name": "Propylene Glycol",
-    "aliases": [],
+    "aliases": [
+      "INS 1520"
+    ],
     "severity_tier": 2,
     "category": "Other Additive",
     "health_effect": "Liver toxicity in cats; low human toxicity at food-grade levels; GRAS in US but limited in some uses",
@@ -707,7 +728,8 @@
     "name": "Sodium Benzoate",
     "aliases": [
       "E211",
-      "Benzoate of Soda"
+      "Benzoate of Soda",
+      "INS 211"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -724,7 +746,8 @@
   {
     "name": "Caramel Coloring",
     "aliases": [
-      "Class IV / 4-MEI"
+      "Class IV / 4-MEI",
+      "INS 150d"
     ],
     "severity_tier": 2,
     "category": "Artificial Color/Dye",
@@ -756,7 +779,8 @@
   {
     "name": "Sulfur Dioxide",
     "aliases": [
-      "SO2"
+      "SO2",
+      "INS 220"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -802,7 +826,10 @@
   },
   {
     "name": "Caramel Coloring III/IV",
-    "aliases": [],
+    "aliases": [
+      "INS 150c",
+      "INS 150d"
+    ],
     "severity_tier": 2,
     "category": "Artificial Color/Dye",
     "health_effect": "As above \u2014 4-MEI concern",
@@ -818,7 +845,8 @@
   {
     "name": "Monosodium Glutamate",
     "aliases": [
-      "MSG"
+      "MSG",
+      "INS 621"
     ],
     "severity_tier": 2,
     "category": "Flavor Enhancer",
@@ -879,7 +907,9 @@
   },
   {
     "name": "Calcium Propionate",
-    "aliases": [],
+    "aliases": [
+      "INS 282"
+    ],
     "severity_tier": 2,
     "category": "Preservative",
     "health_effect": "Behavioral effects in children debated; migraine trigger in some adults; animal studies show some cellular effects",
@@ -895,7 +925,8 @@
   {
     "name": "Sorbates",
     "aliases": [
-      "Potassium Sorbate"
+      "Potassium Sorbate",
+      "INS 202"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -912,7 +943,8 @@
   {
     "name": "Dimethylpolysiloxane",
     "aliases": [
-      "PDMS"
+      "PDMS",
+      "INS 900a"
     ],
     "severity_tier": 2,
     "category": "Fat/Oil",
@@ -943,7 +975,9 @@
   },
   {
     "name": "Propylene Glycol Esters",
-    "aliases": [],
+    "aliases": [
+      "INS 477"
+    ],
     "severity_tier": 2,
     "category": "Other Additive",
     "health_effect": "Low acute toxicity; limited long-term human data",
@@ -973,7 +1007,9 @@
   },
   {
     "name": "Sodium Erythorbate",
-    "aliases": [],
+    "aliases": [
+      "INS 316"
+    ],
     "severity_tier": 2,
     "category": "Other Additive",
     "health_effect": "Used with nitrites \u2014 may affect nitrosamine formation; not independently harmful at food levels",
@@ -988,7 +1024,9 @@
   },
   {
     "name": "Potassium Lactate",
-    "aliases": [],
+    "aliases": [
+      "INS 326"
+    ],
     "severity_tier": 2,
     "category": "Other Additive",
     "health_effect": "Generally regarded as safe; can affect sodium intake; minimal independent health concern",
@@ -1200,7 +1238,9 @@
   },
   {
     "name": "Sodium Aluminum Phosphate",
-    "aliases": [],
+    "aliases": [
+      "INS 541"
+    ],
     "severity_tier": 3,
     "category": "Fortification/Mineral",
     "health_effect": "Aluminum accumulation concern (see #65)",
@@ -1290,7 +1330,9 @@
   },
   {
     "name": "Magnesium Stearate",
-    "aliases": [],
+    "aliases": [
+      "INS 470(iii)"
+    ],
     "severity_tier": 3,
     "category": "Other Additive",
     "health_effect": "Low-concern flow agent; some debate about bioavailability impact",
@@ -1425,7 +1467,9 @@
   },
   {
     "name": "Ammonium Sulfate",
-    "aliases": [],
+    "aliases": [
+      "INS 517"
+    ],
     "severity_tier": 3,
     "category": "Other Additive",
     "health_effect": "Low human concern at food levels; industrial processing residue",
@@ -1539,5 +1583,39 @@
     "time_to_manifest": null,
     "matchable": true,
     "orig_num": "manual-maltodextrin"
+  },
+  {
+    "name": "Disodium Guanylate",
+    "aliases": [
+      "INS 627"
+    ],
+    "severity_tier": 2,
+    "category": "Flavor Enhancer",
+    "health_effect": "Nucleotide-based flavor enhancer, typically used alongside MSG to amplify umami/craving response. Common in Indian snack seasonings, often listed by INS number rather than name.",
+    "banned_in_countries": null,
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-disodium-guanylate"
+  },
+  {
+    "name": "Disodium Inosinate",
+    "aliases": [
+      "INS 631"
+    ],
+    "severity_tier": 2,
+    "category": "Flavor Enhancer",
+    "health_effect": "Nucleotide-based flavor enhancer, typically used alongside MSG to amplify umami/craving response. Common in Indian snack seasonings, often listed by INS number rather than name.",
+    "banned_in_countries": null,
+    "common_substitute_note": null,
+    "source_note": null,
+    "found_in": null,
+    "example_brands": null,
+    "time_to_manifest": null,
+    "matchable": true,
+    "orig_num": "manual-disodium-inosinate"
   }
 ]

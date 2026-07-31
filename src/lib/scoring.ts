@@ -123,6 +123,13 @@ function isExactMatch(token: string, term: string): boolean {
 
 function isFuzzyMatch(token: string, term: string): boolean {
   if (token.length < 4 || term.length < 4) return false;
+  // Fuzzy/typo tolerance only makes sense for natural-language words (a
+  // missing letter in "Titanium Dioxide" is still clearly that chemical).
+  // A numeric regulatory code has no such property: "INS 296" and "INS 250"
+  // are two DIFFERENT additives one edit apart, not a typo of each other.
+  // Allowing fuzzy matches on digits caused a single "INS 296" mention to
+  // cross-match eight unrelated chemicals. Codes must match exactly.
+  if (/\d/.test(term) || /\d/.test(token)) return false;
   const distance = levenshtein(token, term);
   const allowed = term.length <= 6 ? 1 : 2;
   return distance <= allowed;
