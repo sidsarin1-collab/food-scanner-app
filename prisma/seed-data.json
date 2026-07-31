@@ -17,7 +17,8 @@
   {
     "name": "Potassium Bromate",
     "aliases": [
-      "INS 924a"
+      "INS 924a",
+      "E924a"
     ],
     "severity_tier": 1,
     "category": "Bleaching/Dough Agent",
@@ -35,7 +36,8 @@
     "name": "Azodicarbonamide",
     "aliases": [
       "ADA",
-      "INS 927a"
+      "INS 927a",
+      "E927a"
     ],
     "severity_tier": 1,
     "category": "Bleaching/Dough Agent",
@@ -53,7 +55,8 @@
     "name": "Erythrosine",
     "aliases": [
       "Red Dye No. 3",
-      "INS 127"
+      "INS 127",
+      "E127"
     ],
     "severity_tier": 1,
     "category": "Artificial Color/Dye",
@@ -71,7 +74,8 @@
     "name": "Brominated Vegetable Oil",
     "aliases": [
       "BVO",
-      "INS 443"
+      "INS 443",
+      "E443"
     ],
     "severity_tier": 1,
     "category": "Flavor Enhancer",
@@ -173,7 +177,8 @@
     "name": "BHT",
     "aliases": [
       "Butylated Hydroxytoluene",
-      "INS 321"
+      "INS 321",
+      "E321"
     ],
     "severity_tier": 1,
     "category": "Preservative",
@@ -191,7 +196,8 @@
     "name": "BHA",
     "aliases": [
       "Butylated Hydroxyanisole",
-      "INS 320"
+      "INS 320",
+      "E320"
     ],
     "severity_tier": 1,
     "category": "Preservative",
@@ -209,7 +215,8 @@
     "name": "TBHQ",
     "aliases": [
       "Tert-Butylhydroquinone",
-      "INS 319"
+      "INS 319",
+      "E319"
     ],
     "severity_tier": 1,
     "category": "Preservative",
@@ -226,7 +233,8 @@
   {
     "name": "Cyclamates",
     "aliases": [
-      "INS 952"
+      "INS 952",
+      "E952"
     ],
     "severity_tier": 1,
     "category": "Sweetener",
@@ -406,7 +414,8 @@
     "name": "Sodium Nitrite",
     "aliases": [
       "Nitrate",
-      "INS 250"
+      "INS 250",
+      "E250"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -423,7 +432,8 @@
   {
     "name": "Aspartame",
     "aliases": [
-      "INS 951"
+      "INS 951",
+      "E951"
     ],
     "severity_tier": 2,
     "category": "Sweetener",
@@ -440,7 +450,8 @@
   {
     "name": "Carrageenan",
     "aliases": [
-      "INS 407"
+      "INS 407",
+      "E407"
     ],
     "severity_tier": 2,
     "category": "Emulsifier/Thickener",
@@ -569,7 +580,8 @@
   {
     "name": "Ethoxyquin",
     "aliases": [
-      "INS 324"
+      "INS 324",
+      "E324"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -710,7 +722,8 @@
   {
     "name": "Propylene Glycol",
     "aliases": [
-      "INS 1520"
+      "INS 1520",
+      "E1520"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -747,7 +760,8 @@
     "name": "Caramel Coloring",
     "aliases": [
       "Class IV / 4-MEI",
-      "INS 150d"
+      "INS 150d",
+      "E150d"
     ],
     "severity_tier": 2,
     "category": "Artificial Color/Dye",
@@ -780,7 +794,8 @@
     "name": "Sulfur Dioxide",
     "aliases": [
       "SO2",
-      "INS 220"
+      "INS 220",
+      "E220"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -828,7 +843,9 @@
     "name": "Caramel Coloring III/IV",
     "aliases": [
       "INS 150c",
-      "INS 150d"
+      "INS 150d",
+      "E150c",
+      "E150d"
     ],
     "severity_tier": 2,
     "category": "Artificial Color/Dye",
@@ -846,7 +863,8 @@
     "name": "Monosodium Glutamate",
     "aliases": [
       "MSG",
-      "INS 621"
+      "INS 621",
+      "E621"
     ],
     "severity_tier": 2,
     "category": "Flavor Enhancer",
@@ -908,7 +926,8 @@
   {
     "name": "Calcium Propionate",
     "aliases": [
-      "INS 282"
+      "INS 282",
+      "E282"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -926,7 +945,8 @@
     "name": "Sorbates",
     "aliases": [
       "Potassium Sorbate",
-      "INS 202"
+      "INS 202",
+      "E202"
     ],
     "severity_tier": 2,
     "category": "Preservative",
@@ -944,7 +964,8 @@
     "name": "Dimethylpolysiloxane",
     "aliases": [
       "PDMS",
-      "INS 900a"
+      "INS 900a",
+      "E900a"
     ],
     "severity_tier": 2,
     "category": "Fat/Oil",
@@ -976,7 +997,8 @@
   {
     "name": "Propylene Glycol Esters",
     "aliases": [
-      "INS 477"
+      "INS 477",
+      "E477"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -1008,7 +1030,8 @@
   {
     "name": "Sodium Erythorbate",
     "aliases": [
-      "INS 316"
+      "INS 316",
+      "E316"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -1025,7 +1048,8 @@
   {
     "name": "Potassium Lactate",
     "aliases": [
-      "INS 326"
+      "INS 326",
+      "E326"
     ],
     "severity_tier": 2,
     "category": "Other Additive",
@@ -1239,7 +1263,8 @@
   {
     "name": "Sodium Aluminum Phosphate",
     "aliases": [
-      "INS 541"
+      "INS 541",
+      "E541"
     ],
     "severity_tier": 3,
     "category": "Fortification/Mineral",
@@ -1331,7 +1356,8 @@
   {
     "name": "Magnesium Stearate",
     "aliases": [
-      "INS 470(iii)"
+      "INS 470(iii)",
+      "E572"
     ],
     "severity_tier": 3,
     "category": "Other Additive",
@@ -1468,7 +1494,8 @@
   {
     "name": "Ammonium Sulfate",
     "aliases": [
-      "INS 517"
+      "INS 517",
+      "E517"
     ],
     "severity_tier": 3,
     "category": "Other Additive",
@@ -1587,7 +1614,8 @@
   {
     "name": "Disodium Guanylate",
     "aliases": [
-      "INS 627"
+      "INS 627",
+      "E627"
     ],
     "severity_tier": 2,
     "category": "Flavor Enhancer",
@@ -1604,7 +1632,8 @@
   {
     "name": "Disodium Inosinate",
     "aliases": [
-      "INS 631"
+      "INS 631",
+      "E631"
     ],
     "severity_tier": 2,
     "category": "Flavor Enhancer",
