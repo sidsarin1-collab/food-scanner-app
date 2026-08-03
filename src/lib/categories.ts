@@ -20,6 +20,8 @@ export const CATEGORIES: Category[] = [
   { label: "Cheese", offTag: "en:cheeses" },
   { label: "Pasta", offTag: "en:pastas" },
   { label: "Peanut butter", offTag: "en:peanut-butters" },
+  { label: "BBQ Sauce", offTag: "en:barbecue-sauces" },
+  { label: "Sauces", offTag: "en:sauces" },
   { label: "Ketchup & condiments", offTag: "en:condiments" },
   { label: "Salad dressing", offTag: "en:dressings" },
   { label: "Fruit juice", offTag: "en:fruit-juices" },
