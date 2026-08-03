@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-500 shadow-sm hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-700"
           >
             <span aria-hidden="true">☕</span>
-            Support this project ($1)
+            Support this project
           </a>
         </footer>
         <AnalyticsNotice />
