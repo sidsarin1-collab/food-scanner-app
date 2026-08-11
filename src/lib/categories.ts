@@ -25,6 +25,7 @@ export const CATEGORIES: Category[] = [
   { label: "Ketchup & condiments", offTag: "en:condiments" },
   { label: "Salad dressing", offTag: "en:dressings" },
   { label: "Fruit juice", offTag: "en:fruit-juices" },
+  { label: "Dried Fruit", offTag: "en:dried-fruits" },
   { label: "Frozen meals", offTag: "en:frozen-foods" },
   { label: "Canned soup", offTag: "en:soups" },
   { label: "Granola / cereal bars", offTag: "en:cereal-bars" },
