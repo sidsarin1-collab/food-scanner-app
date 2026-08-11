@@ -11,6 +11,8 @@ type Suggestion = {
   sourceIngredientText: string;
   reasoning: string | null;
   createdAt: string;
+  possibleDuplicateOfName: string | null;
+  possibleDuplicateNote: string | null;
 };
 
 const TIER_LABEL: Record<number, string> = { 1: "Bad", 2: "Badder", 3: "Ugly" };
@@ -87,7 +89,17 @@ export default function SuggestedChemicalsTable() {
       ) : (
         <div className="space-y-3">
           {suggestions.map((s) => (
-            <div key={s.id} className="rounded-lg border border-neutral-200 bg-white p-4">
+            <div
+              key={s.id}
+              className={`rounded-lg border bg-white p-4 ${
+                s.possibleDuplicateOfName ? "border-amber-300" : "border-neutral-200"
+              }`}
+            >
+              {s.possibleDuplicateOfName && (
+                <div className="mb-2 rounded-md bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
+                  ⚠ Possible duplicate of &ldquo;{s.possibleDuplicateOfName}&rdquo; — {s.possibleDuplicateNote}
+                </div>
+              )}
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="font-semibold">{s.name}</div>

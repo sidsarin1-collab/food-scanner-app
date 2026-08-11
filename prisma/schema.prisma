@@ -49,6 +49,15 @@ model SuggestedChemical {
   reasoning            String?
   createdAt            DateTime @default(now()) @map("created_at")
 
+  // Set when a name-similarity check found an existing chemical (or another
+  // pending suggestion) that this might just be a re-worded duplicate of --
+  // e.g. "Caramel Color" vs. an existing "Caramel Coloring III/IV". Informational
+  // only, doesn't block approval; the id is denormalized as text (not a real FK)
+  // since the target could be a Chemical or another SuggestedChemical, and either
+  // could be deleted later without invalidating this note.
+  possibleDuplicateOfName String? @map("possible_duplicate_of_name")
+  possibleDuplicateNote   String? @map("possible_duplicate_note")
+
   @@map("suggested_chemicals")
 }
 

@@ -1,7 +1,66 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "./db";
+import { findSimilarExisting } from "./chemicalConflicts";
 
 const MODEL = "claude-sonnet-5";
+
+// Common whole-food words that are almost never worth a research call --
+// deprioritized (not excluded) so they only lose out to more additive-looking
+// candidates when the per-scan cap is tight.
+const LOW_PRIORITY_WHOLE_FOODS = new Set([
+  "water",
+  "salt",
+  "sugar",
+  "milk",
+  "egg",
+  "eggs",
+  "butter",
+  "honey",
+  "yeast",
+  "cocoa",
+  "vanilla",
+  "cheese",
+  "cream",
+  "yogurt",
+  "flour",
+  "wheat",
+  "corn",
+  "rice",
+  "oats",
+  "oat",
+  "meat",
+  "beef",
+  "pork",
+  "chicken",
+  "fish",
+  "vinegar",
+  "molasses",
+]);
+
+// Suffixes/keywords/known sweetener names that suggest a synthetic additive
+// worth researching first, plus any digit (E-numbers, INS codes, percentages).
+const ADDITIVE_SIGNAL_RE =
+  /\b(\w*(ate|ite|ide|ium|oxide|dextrin|cellulose|lecithin|stearate|citrate|lactate|nitrate|nitrite|glutamate|carotene|paraben|sulfate|benzoate|sorbate|phosphate)|sucralose|aspartame|saccharin|acesulfame|artificial|synthetic|preservative|emulsifier|stabilizer|colou?r(ing)?|dye)\b/i;
+
+function additivePriority(phrase: string): number {
+  const normalized = phrase.trim().toLowerCase();
+  if (LOW_PRIORITY_WHOLE_FOODS.has(normalized)) return -1;
+  if (/\d/.test(normalized)) return 2;
+  if (ADDITIVE_SIGNAL_RE.test(normalized)) return 2;
+  return 0;
+}
+
+/**
+ * Reorders unmatched ingredients so additive-looking candidates (chemical
+ * suffixes, E-numbers, known sweetener names, "artificial"/"preservative"/etc.)
+ * are researched before plain whole-food words like "milk" or "salt" -- so a
+ * capped per-scan budget doesn't get exhausted by bulk ingredients before it
+ * reaches the ones actually worth flagging. Stable sort: ties keep their
+ * original label order.
+ */
+export function rankIngredientsForResearch(ingredients: string[]): string[] {
+  return [...ingredients].sort((a, b) => additivePriority(b) - additivePriority(a));
+}
 
 const SYSTEM_PROMPT = `You are a food-safety research assistant for an ingredient-scanning app. You'll be given a single ingredient exactly as it appeared on a packaged food's label, which did not match anything in the app's existing chemical-safety database (~109 known food additives/chemicals of concern).
 
@@ -150,6 +209,14 @@ export async function suggestChemicalForIngredient(ingredientText: string): Prom
     const research = await researchUnknownIngredient(sourceText);
     if (!research.ok || research.skip) return;
 
+    // Catches reworded re-runs of the same substance (e.g. "Caramel Color" vs
+    // an existing "Caramel Coloring III/IV") that the exact-match dedup above
+    // and the DB unique constraint on Chemical.name both miss. Doesn't block
+    // the write -- just flags it so an admin reviews before approving instead
+    // of silently creating another near-duplicate row.
+    const similar = await findSimilarExisting(research.suggestion.name);
+    const topMatch = similar[0];
+
     await prisma.suggestedChemical.create({
       data: {
         name: research.suggestion.name,
@@ -158,6 +225,10 @@ export async function suggestChemicalForIngredient(ingredientText: string): Prom
         proposedHealthEffect: research.suggestion.healthEffect,
         sourceIngredientText: sourceText,
         reasoning: research.suggestion.reasoning,
+        possibleDuplicateOfName: topMatch ? topMatch.name : null,
+        possibleDuplicateNote: topMatch
+          ? `${Math.round(topMatch.overlapRatio * 100)}% name-word overlap with existing "${topMatch.name}" -- review before approving, may be the same substance.`
+          : null,
       },
     });
   } catch (err) {
