@@ -44,7 +44,10 @@ export default function SuggestedChemicalsTable() {
     setError(null);
     try {
       const res = await fetch(`/api/admin/suggested-chemicals/${id}/approve`, { method: "POST" });
-      if (!res.ok) throw new Error("Approve failed");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Approve failed");
+      }
       setSuggestions((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approve failed");
