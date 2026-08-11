@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { isAuthedAdmin } from "@/lib/auth";
-import ChemicalsTable from "./ChemicalsTable";
+import AdminDashboardTabs from "./AdminDashboardTabs";
 
 export default function AdminDashboardPage() {
   if (!isAuthedAdmin()) {
@@ -9,7 +9,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <ChemicalsTable />
+      <AdminDashboardTabs />
     </div>
   );
 }

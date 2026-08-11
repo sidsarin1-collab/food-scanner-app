@@ -29,6 +29,8 @@ export type ScoreResult = {
   verdict: "Clean" | "Caution" | "Avoid";
   ingredientCount: number;
   flagged: FlaggedIngredient[];
+  /** Ingredient phrases that matched no chemical, exact or fuzzy -- candidates for the gap-finder agent. */
+  unmatchedIngredients: string[];
 };
 
 const TIER_POINTS: Record<number, number> = { 1: 5, 2: 15, 3: 30 };
@@ -156,6 +158,8 @@ export function scoreIngredientList(
     { chemical: ChemicalForMatching; matchedTerm: string; matchType: "exact" | "fuzzy"; ingredientText: string }
   >();
 
+  const unmatchedIngredients = new Set<string>();
+
   for (const rawToken of tokens) {
     const token = normalize(rawToken);
     if (!token) continue;
@@ -176,18 +180,27 @@ export function scoreIngredientList(
       }
     }
 
+    let foundFuzzy = false;
     if (!foundExact) {
       for (const { term, chemical } of terms) {
         if (!term) continue;
-        if (isFuzzyMatch(token, term) && !matchesByChemical.has(chemical.id)) {
-          matchesByChemical.set(chemical.id, {
-            chemical,
-            matchedTerm: term,
-            matchType: "fuzzy",
-            ingredientText: rawToken.trim(),
-          });
+        if (isFuzzyMatch(token, term)) {
+          foundFuzzy = true;
+          if (!matchesByChemical.has(chemical.id)) {
+            matchesByChemical.set(chemical.id, {
+              chemical,
+              matchedTerm: term,
+              matchType: "fuzzy",
+              ingredientText: rawToken.trim(),
+            });
+          }
         }
       }
+    }
+
+    if (!foundExact && !foundFuzzy) {
+      const trimmed = rawToken.trim();
+      if (trimmed) unmatchedIngredients.add(trimmed);
     }
   }
 
@@ -220,5 +233,11 @@ export function scoreIngredientList(
   const verdict: ScoreResult["verdict"] =
     score >= 70 ? "Clean" : score >= 40 ? "Caution" : "Avoid";
 
-  return { score, verdict, ingredientCount: tokens.length, flagged };
+  return {
+    score,
+    verdict,
+    ingredientCount: tokens.length,
+    flagged,
+    unmatchedIngredients: Array.from(unmatchedIngredients),
+  };
 }

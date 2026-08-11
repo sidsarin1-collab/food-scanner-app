@@ -36,6 +36,22 @@ model Chemical {
   @@map("chemicals")
 }
 
+// Gap-finder agent output: an ingredient the scoring engine couldn't match to
+// any existing Chemical gets researched by Claude and queued here for admin
+// review. Never written directly into the live `chemicals` table.
+model SuggestedChemical {
+  id                   String   @id @default(cuid())
+  name                 String
+  proposedTier         Int      @map("proposed_tier")
+  proposedCategory     String?  @map("proposed_category")
+  proposedHealthEffect String?  @map("proposed_health_effect")
+  sourceIngredientText String   @map("source_ingredient_text")
+  reasoning            String?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@map("suggested_chemicals")
+}
+
 model Product {
   id             String   @id @default(cuid())
   name           String

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import AnalyticsNotice from "@/components/AnalyticsNotice";
+import SuggestedBadge from "@/components/SuggestedBadge";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,8 +19,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/" className="font-semibold">
               Ingredient Safety Scanner
             </Link>
-            <Link href="/admin" className="text-sm text-neutral-500 hover:text-neutral-800">
+            <Link href="/admin" className="flex items-center text-sm text-neutral-500 hover:text-neutral-800">
               Admin
+              <SuggestedBadge />
             </Link>
           </div>
         </header>

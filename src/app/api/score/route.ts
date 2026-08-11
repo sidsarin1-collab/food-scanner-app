@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { scoreIngredientList } from "@/lib/scoring";
+import { suggestChemicalForIngredient } from "@/lib/gapFinder";
+
+// Cap per scan so one long ingredient panel can't fan out into a burst of
+// Claude calls -- a handful of unmatched ingredients per scan is plenty to
+// surface real gaps without runaway API usage.
+const MAX_GAP_FINDER_CALLS_PER_SCAN = 5;
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -44,6 +50,14 @@ export async function POST(req: Request) {
       flaggedChemicalIds: result.flagged.map((f) => f.chemicalId),
     },
   });
+
+  // Runs after the response is queued below -- doesn't block the score result.
+  // Relies on this being a long-running Node process (Railway), not a
+  // serverless function that would be frozen once the response is sent.
+  for (const ingredient of result.unmatchedIngredients.slice(0, MAX_GAP_FINDER_CALLS_PER_SCAN)) {
+    if (ingredient.length < 3) continue;
+    void suggestChemicalForIngredient(ingredient);
+  }
 
   return NextResponse.json(result);
 }
