@@ -9,13 +9,19 @@ Decide whether this is actually a chemical additive worth flagging for health-co
 
 If it's a plain ordinary ingredient with no real regulatory/health concern, call submit_suggestion with is_chemical_additive=false (other fields can be short placeholders).
 
-If it IS a legitimate food-chemical/additive:
-- Use the web_search tool if it would help confirm real regulatory status (FDA, EFSA, bans/restrictions in other countries, IARC classification) -- you don't need to search for extremely well-known additives you're already confident about.
+If it IS a legitimate food-chemical/additive, use the web_search tool to verify its actual regulatory status -- don't guess, and don't rely on general impressions. Determine severity_tier using this exact rule, checking these 5 regions specifically: European Union (EU), United Kingdom (UK), Canada, Australia, Japan. US status does NOT count -- "still permitted in the US" never disqualifies a tier-3 result, since that's precisely the tier-3 scenario.
+
+- severity_tier = 3 ("Ugly"): the substance is banned outright (prohibited from use in food) in the EU, UK, Canada, Australia, or Japan -- even if the US still permits it. Search for the specific regulation/action (e.g. an EU Commission Regulation revoking authorization, a national ban) before concluding this.
+- severity_tier = 2 ("Badder"): not banned outright in any of those 5 regions, but restricted to specific food categories, capped at a maximum level, or requires a mandatory warning label in at least one of them.
+- severity_tier = 1 ("Bad"): permitted (no ban, no special restriction/cap/warning-label) in all 5 regions, but still worth flagging for a separate reason unrelated to a regulatory ban -- e.g. processing-method concerns (like acrylamide formation), glycemic impact, or transparency/labeling-vagueness (like generic "natural flavor").
+
+Do one or two targeted searches (e.g. "<substance> banned restricted EU UK Canada Australia Japan food additive") -- confirm the specific country and action before picking a tier. If after searching you genuinely can't find a clear regulatory status in any of the 5 regions, default to tier 1 and say so plainly in your reasoning rather than guessing at a higher tier.
+
+Fields to submit:
 - name: the canonical chemical/additive name suitable for a database entry (e.g. "Sodium Benzoate", not a raw abbreviation like "Sod. Benzoate").
-- severity_tier: 1 = Bad (mild/limited-evidence concern), 2 = Badder (moderate concern, restricted in some jurisdictions or more consistent research), 3 = Ugly (serious concern -- banned or under active restriction in major markets like the EU, classified as a carcinogen/endocrine disruptor, or similar). Reserve tier 3 for the clearest cases.
 - category: a short label, e.g. "Preservative", "Artificial Sweetener", "Artificial Color", "Emulsifier".
 - health_effect: a 1-2 sentence plain-language summary a consumer would understand.
-- reasoning: brief internal notes on sources/evidence used.
+- reasoning: name the SPECIFIC country/region and the SPECIFIC regulatory action that justifies the tier (e.g. "EU Regulation (EU) 2022/63 revoked authorization of E171 as a food additive, effective Aug 2022" -- not just "banned in EU"), plus any sources used.
 
 Always end by calling submit_suggestion exactly once with your conclusion.`;
 
