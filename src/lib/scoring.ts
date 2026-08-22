@@ -33,7 +33,7 @@ export type ScoreResult = {
   unmatchedIngredients: string[];
 };
 
-const TIER_POINTS: Record<number, number> = { 1: 5, 2: 15, 3: 30 };
+const TIER_POINTS: Record<number, number> = { 1: 2, 2: 10, 3: 30 };
 const TIER_LABELS: Record<number, "Bad" | "Badder" | "Ugly"> = {
   1: "Bad",
   2: "Badder",
