@@ -6,6 +6,7 @@ import {
   getTopFlaggedChemicals,
   getVerdictRatioOverTime,
   getScansByCountry,
+  getDailyUniqueVisitorsByCountry,
 } from "@/lib/dashboardStats";
 
 const TIER_LABEL: Record<number, string> = { 1: "Bad", 2: "Badder", 3: "Ugly" };
@@ -29,16 +30,24 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
-  const [mostScanned, topFlagged, verdictWeeks, byCountry] = await Promise.all([
+  const [mostScanned, topFlagged, verdictWeeks, byCountry, dailyVisitors] = await Promise.all([
     getMostScannedThisWeek(),
     getTopFlaggedChemicals(),
     getVerdictRatioOverTime(),
     getScansByCountry(),
+    getDailyUniqueVisitorsByCountry(),
   ]);
 
   const maxScanned = Math.max(1, ...mostScanned.map((p) => p.scanCount));
   const maxFlagged = Math.max(1, ...topFlagged.map((c) => c.flagCount));
   const maxCountry = Math.max(1, ...byCountry.map((c) => c.scanCount));
+
+  const visitorsByDay = new Map<string, { country: string; city: string | null; uniqueVisitors: number }[]>();
+  for (const row of dailyVisitors) {
+    if (!visitorsByDay.has(row.day)) visitorsByDay.set(row.day, []);
+    visitorsByDay.get(row.day)!.push({ country: row.country, city: row.city, uniqueVisitors: row.uniqueVisitors });
+  }
+  const days = Array.from(visitorsByDay.keys()).sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="space-y-10">
@@ -121,6 +130,37 @@ export default async function DashboardPage() {
               <span><span className="inline-block h-2 w-2 rounded-full bg-amber-400" /> Caution</span>
               <span><span className="inline-block h-2 w-2 rounded-full bg-red-400" /> Avoid</span>
             </div>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-semibold">Unique visitors per day by country/city</h2>
+        <p className="text-xs text-neutral-500">
+          Resolved from the visitor&apos;s IP address at event time -- the IP itself is never stored, only these
+          results. City is frequently unavailable (weaker coverage in the free geo dataset); shown as
+          &ldquo;(city unknown)&rdquo; when so. Last 30 days.
+        </p>
+        {days.length === 0 ? (
+          <p className="text-sm text-neutral-500">No visitor data recorded yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {days.map((day) => (
+              <div key={day} className="space-y-1">
+                <div className="text-xs font-semibold text-neutral-600">{day}</div>
+                <div className="space-y-1 pl-2">
+                  {visitorsByDay.get(day)!.map((c) => (
+                    <div key={`${c.country}-${c.city ?? "none"}`} className="flex items-center justify-between text-sm">
+                      <span>
+                        {c.country}
+                        {c.city ? ` — ${c.city}` : " (city unknown)"}
+                      </span>
+                      <span className="text-neutral-500">{c.uniqueVisitors}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>

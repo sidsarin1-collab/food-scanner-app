@@ -4,6 +4,7 @@ export type MostScannedProduct = { name: string; scanCount: number };
 export type FlaggedChemicalStat = { name: string; severityTier: number; flagCount: number };
 export type VerdictWeek = { week: string; clean: number; caution: number; avoid: number };
 export type CountryStat = { country: string; scanCount: number };
+export type DailyCountryVisitors = { day: string; country: string; city: string | null; uniqueVisitors: number };
 
 /** Most-scanned products in the last 7 days. Excludes the "Untitled product"
  * placeholder used when no name was given -- it isn't a real product identity. */
@@ -72,4 +73,28 @@ export async function getScansByCountry(): Promise<CountryStat[]> {
     ORDER BY scan_count DESC
   `;
   return rows.map((r) => ({ country: r.country ?? "Unknown", scanCount: Number(r.scan_count) }));
+}
+
+/** Unique visitors (by session_id) per day per IP-derived country/city, last
+ * 30 days. Uses `detected_country`/`detected_city` (resolved from the
+ * request IP at event time, IP itself never stored) -- not the self-selected
+ * `country` search parameter. City is frequently null (weaker coverage in
+ * the free geoip dataset -- VPNs, mobile carriers, many residential IPs). */
+export async function getDailyUniqueVisitorsByCountry(): Promise<DailyCountryVisitors[]> {
+  const rows = await prisma.$queryRaw<
+    { day: Date; country: string | null; city: string | null; unique_visitors: bigint }[]
+  >`
+    SELECT DATE_TRUNC('day', timestamp)::date as day, detected_country as country, detected_city as city,
+           COUNT(DISTINCT session_id)::int as unique_visitors
+    FROM events
+    WHERE timestamp >= NOW() - INTERVAL '30 days'
+    GROUP BY day, detected_country, detected_city
+    ORDER BY day DESC, unique_visitors DESC
+  `;
+  return rows.map((r) => ({
+    day: r.day.toISOString().slice(0, 10),
+    country: r.country ?? "Unknown",
+    city: r.city,
+    uniqueVisitors: Number(r.unique_visitors),
+  }));
 }

@@ -1,5 +1,8 @@
 const SESSION_COOKIE = "scanner_session";
-const NOTICE_ACK_KEY = "scanner_analytics_notice_ack";
+// Bumped to v2 when city-level tracking was added -- forces the notice to
+// reappear for anyone who already acknowledged the old (country-only) text,
+// since their earlier "Got it" wasn't informed consent for this expanded scope.
+const NOTICE_ACK_KEY = "scanner_analytics_notice_ack_v2";
 const COOKIE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 
 export function hasAcknowledgedNotice(): boolean {

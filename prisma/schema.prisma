@@ -91,5 +91,14 @@ model Event {
   action         String // "viewed" | "clicked_alternative" | "dismissed"
   country        String? // self-selected from the checker's country dropdown, never GPS
 
+  // IP-derived country (ISO code, e.g. "US") and city, looked up in-memory
+  // from the request IP at event time -- the raw IP is never stored
+  // anywhere, only these resolved results. Distinct from `country` above (a
+  // product-search parameter the user picks, not their actual location).
+  // City coverage is notably weaker than country in the free geoip-lite
+  // dataset -- null is expected and common, not a bug.
+  detectedCountry String? @map("detected_country")
+  detectedCity    String? @map("detected_city")
+
   @@map("events")
 }

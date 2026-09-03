@@ -17,11 +17,13 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@prisma/client": "^5.20.0",
+    "geoip-lite": "^2.0.3",
     "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/geoip-lite": "^1.4.4",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
