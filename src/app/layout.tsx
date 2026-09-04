@@ -6,7 +6,7 @@ import SuggestedBadge from "@/components/SuggestedBadge";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ingredient Safety Scanner",
+  title: "FoodPurityScanner",
   description: "Paste an ingredient list and see what's flagged and why.",
 };
 
@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="border-b border-neutral-200 bg-white">
           <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
             <Link href="/" className="font-semibold">
-              Ingredient Safety Scanner
+              FoodPurityScanner
             </Link>
             <Link href="/admin" className="flex items-center text-sm text-neutral-500 hover:text-neutral-800">
               Admin
@@ -27,6 +27,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </header>
         <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>
         <footer className="mx-auto max-w-3xl px-4 pb-6 text-center">
+          <nav className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-neutral-500">
+            <Link href="/about" className="hover:text-neutral-700 hover:underline">
+              About
+            </Link>
+            <Link href="/how-we-evaluate-ingredients" className="hover:text-neutral-700 hover:underline">
+              How We Evaluate Ingredients
+            </Link>
+            <Link href="/regulatory-sources" className="hover:text-neutral-700 hover:underline">
+              Regulatory Sources
+            </Link>
+          </nav>
           <a
             href="https://buy.stripe.com/test_5kQ00k4XwbKS85X9E0bV600"
             target="_blank"
