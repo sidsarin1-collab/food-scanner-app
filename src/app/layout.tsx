@@ -16,9 +16,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen bg-neutral-50 text-neutral-900">
         <header className="border-b border-neutral-200 bg-white">
           <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-            <Link href="/" className="font-semibold">
-              FoodPurityScanner
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="font-semibold">
+                FoodPurityScanner
+              </Link>
+              <Link href="/about" className="text-sm text-neutral-500 hover:text-neutral-800">
+                About
+              </Link>
+            </div>
             <Link href="/admin" className="flex items-center text-sm text-neutral-500 hover:text-neutral-800">
               Admin
               <SuggestedBadge />
