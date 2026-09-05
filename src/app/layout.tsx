@@ -8,6 +8,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FoodPurityScanner",
   description: "Paste an ingredient list and see what's flagged and why.",
+  verification: {
+    google: "6Y2AUnixk0OwLl9mROFvsuduihkePmXi7-Z8OMmYPIk",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
