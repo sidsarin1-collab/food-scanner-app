@@ -10,4 +10,4 @@ export const SITE_URL = rawSiteUrl || "http://localhost:3000";
 // real domain is purchased, DNS is pointed at Railway, and SITE_URL above is
 // set to it. Turning this on while SITE_URL still points at a placeholder
 // (or before DNS is live) would redirect real traffic into a dead end.
-export const DOMAIN_REDIRECT_ENABLED = process.env.ENABLE_DOMAIN_REDIRECT === "true";
+export const DOMAIN_REDIRECT_ENABLED = process.env.ENABLE_DOMAIN_REDIRECT?.trim().toLowerCase() === "true";
