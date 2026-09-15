@@ -123,6 +123,35 @@ function isExactMatch(token: string, term: string): boolean {
   return containsWordPhrase(wordsOf(token), wordsOf(term));
 }
 
+// Anion-family suffixes that encode a genuinely different compound, not a
+// spelling variant -- sulfATE (SO4) vs sulfITE (SO3) vs sulfIDE (S2-),
+// nitrATE vs nitrITE, chlorATE vs chlorITE vs chlorIDE, bromATE vs bromIDE,
+// citrATE vs (unrelated root, but still) nitrITE. These can be as little as
+// ONE edit apart (sulfate/sulfite) -- well inside any Levenshtein tolerance
+// we'd want for real typos -- yet are chemically unrelated. "Sodium Citrate"
+// fuzzy-matching "Sodium Nitrite" (distance 2, within the old threshold) is
+// this exact failure mode.
+const CONFUSABLE_SUFFIXES = ["ate", "ite", "ide"];
+
+function suffixOf(lastWord: string): string | null {
+  for (const suffix of CONFUSABLE_SUFFIXES) {
+    if (lastWord.endsWith(suffix)) return suffix;
+  }
+  return null;
+}
+
+/** True if token and term end in two DIFFERENT members of the confusable
+ * anion-suffix family -- a fuzzy match must never bridge these, no matter
+ * how close the rest of the word is. */
+function hasConflictingChemicalSuffix(token: string, term: string): boolean {
+  const tokenWords = wordsOf(token);
+  const termWords = wordsOf(term);
+  if (tokenWords.length === 0 || termWords.length === 0) return false;
+  const tokenSuffix = suffixOf(tokenWords[tokenWords.length - 1]);
+  const termSuffix = suffixOf(termWords[termWords.length - 1]);
+  return tokenSuffix !== null && termSuffix !== null && tokenSuffix !== termSuffix;
+}
+
 function isFuzzyMatch(token: string, term: string): boolean {
   if (token.length < 4 || term.length < 4) return false;
   // Fuzzy/typo tolerance only makes sense for natural-language words (a
@@ -132,6 +161,7 @@ function isFuzzyMatch(token: string, term: string): boolean {
   // Allowing fuzzy matches on digits caused a single "INS 296" mention to
   // cross-match eight unrelated chemicals. Codes must match exactly.
   if (/\d/.test(term) || /\d/.test(token)) return false;
+  if (hasConflictingChemicalSuffix(token, term)) return false;
   const distance = levenshtein(token, term);
   const allowed = term.length <= 6 ? 1 : 2;
   return distance <= allowed;
