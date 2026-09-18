@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   verification: {
     google: "6Y2AUnixk0OwLl9mROFvsuduihkePmXi7-Z8OMmYPIk",
   },
+  openGraph: {
+    title: "FoodPurityScanner — Know What's Really In Your Food",
+    description:
+      "Scan any ingredient label and see what's actually in it, explained in plain language.",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
