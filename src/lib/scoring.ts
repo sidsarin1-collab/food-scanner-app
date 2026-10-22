@@ -27,6 +27,9 @@ export type FlaggedIngredient = {
 export type ScoreResult = {
   score: number;
   verdict: "Clean" | "Caution" | "Avoid";
+  /** True when the numeric score alone would have been "Clean" but a Tier 2/3
+   * flag forced the verdict down to "Caution" -- see the cap below. */
+  verdictCapped: boolean;
   ingredientCount: number;
   flagged: FlaggedIngredient[];
   /** Ingredient phrases that matched no chemical, exact or fuzzy -- candidates for the gap-finder agent. */
@@ -260,12 +263,21 @@ export function scoreIngredientList(
   score = Math.max(0, score);
   flagged.sort((a, b) => b.severityTier - a.severityTier);
 
-  const verdict: ScoreResult["verdict"] =
+  let verdict: ScoreResult["verdict"] =
     score >= 70 ? "Clean" : score >= 40 ? "Caution" : "Avoid";
+
+  // A high score can still hide a single severe ingredient (e.g. four
+  // low-point Tier 1 flags plus one Tier 2 flag can still clear 70). Any
+  // Tier 2/3 flag means the product can never read as "Clean", matching the
+  // existing rule (see ScannerForm's alternatives trigger) that a Tier 2/3
+  // flag always warrants showing alternatives regardless of the numeric score.
+  const verdictCapped = verdict === "Clean" && flagged.some((f) => f.severityTier >= 2);
+  if (verdictCapped) verdict = "Caution";
 
   return {
     score,
     verdict,
+    verdictCapped,
     ingredientCount: tokens.length,
     flagged,
     unmatchedIngredients: Array.from(unmatchedIngredients),

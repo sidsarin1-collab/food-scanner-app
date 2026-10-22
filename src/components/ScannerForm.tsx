@@ -23,6 +23,7 @@ type FlaggedIngredient = {
 type ScoreResult = {
   score: number;
   verdict: "Clean" | "Caution" | "Avoid";
+  verdictCapped: boolean;
   ingredientCount: number;
   flagged: FlaggedIngredient[];
 };
@@ -370,6 +371,11 @@ export default function ScannerForm() {
               Chemical Safety Score: 70-100 Clean, 40-69 Caution, 0-39 Avoid — additive safety only.
               Nutri-Score (A-E, nutrition) and NOVA (1-4, processing level) are independent signals.
             </p>
+            {result.verdictCapped && (
+              <p className="mt-1 text-xs text-amber-700">
+                Verdict capped at Caution because it contains a Tier 2 or 3 flagged ingredient.
+              </p>
+            )}
           </div>
 
           {result.flagged.length === 0 ? (
