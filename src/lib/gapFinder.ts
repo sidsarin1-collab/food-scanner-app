@@ -4,38 +4,79 @@ import { findSimilarExisting } from "./chemicalConflicts";
 
 const MODEL = "claude-sonnet-5";
 
-// Common whole-food words that are almost never worth a research call --
-// deprioritized (not excluded) so they only lose out to more additive-looking
-// candidates when the per-scan cap is tight.
-const LOW_PRIORITY_WHOLE_FOODS = new Set([
-  "water",
-  "salt",
-  "sugar",
-  "milk",
-  "egg",
-  "eggs",
-  "butter",
-  "honey",
-  "yeast",
-  "cocoa",
-  "vanilla",
-  "cheese",
-  "cream",
-  "yogurt",
-  "flour",
-  "wheat",
-  "corn",
-  "rice",
-  "oats",
-  "oat",
-  "meat",
-  "beef",
-  "pork",
-  "chicken",
-  "fish",
-  "vinegar",
-  "molasses",
+// Everyday foods that are never worth a paid research call. They are never
+// researched, and they rank last so they can't use up the per-scan budget.
+const NON_ADDITIVE_FOODS = new Set([
+  "water", "carbonated water", "spring water", "mineral water",
+  "salt", "sea salt",
+  "sugar", "cane sugar", "brown sugar", "powdered sugar", "maple sugar", "maple syrup",
+  "milk", "skim milk", "whole milk", "milkfat", "cream", "butter", "cheese", "yogurt",
+  "egg", "eggs", "egg yolk", "egg yolks", "egg whites",
+  "honey", "molasses", "yeast", "vinegar",
+  "cocoa", "cocoa butter", "cocoa powder", "vanilla",
+  "flour", "wheat", "wheat flour", "corn", "rice", "oats", "oat",
+  "meat", "beef", "pork", "chicken", "fish",
+  "almonds", "peanuts", "walnuts", "cashews", "pecans",
+  "olive oil", "extra virgin olive oil", "coconut oil",
+  "pepper", "black pepper", "garlic", "onion", "onions", "cinnamon",
 ]);
+
+function normalizeFoodPhrase(phrase: string): string {
+  return phrase
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:(?:and|or|contains|organic|filtered|purified)\s+)+/, "");
+}
+
+export function isObviousNonAdditive(phrase: string): boolean {
+  return NON_ADDITIVE_FOODS.has(normalizeFoodPhrase(phrase));
+}
+
+// Safety limits for the paid lookups. Both are read fresh from the environment.
+//   GAP_FINDER_ENABLED=false     -> lookups stop (anything else, or unset, = on)
+//   GAP_FINDER_DAILY_CAP=<n>     -> max Claude requests per UTC day (default 50)
+const DEFAULT_DAILY_CAP = 50;
+const usage = { day: "", count: 0, capLoggedDay: "" };
+
+function isGapFinderEnabled(): boolean {
+  const value = (process.env.GAP_FINDER_ENABLED ?? "").trim().toLowerCase();
+  return !["false", "0", "off", "no"].includes(value);
+}
+
+function dailyCap(): number {
+  const n = Number.parseInt(process.env.GAP_FINDER_DAILY_CAP ?? "", 10);
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_DAILY_CAP;
+}
+
+function gapFinderCapReached(now: Date): boolean {
+  const day = now.toISOString().slice(0, 10);
+  if (usage.day !== day) {
+    usage.day = day;
+    usage.count = 0;
+  }
+  const cap = dailyCap();
+  if (usage.count < cap) return false;
+  if (usage.capLoggedDay !== day) {
+    usage.capLoggedDay = day;
+    console.warn(`[gap-finder] Daily cap of ${cap} Claude requests reached for ${day} (UTC); research paused until tomorrow.`);
+  }
+  return true;
+}
+
+/** Every Claude request the gap-finder makes must call this first; false means "don't send". */
+export function takeGapFinderRequest(now: Date = new Date()): boolean {
+  if (gapFinderCapReached(now)) return false;
+  usage.count++;
+  return true;
+}
+
+async function sendCountedRequest(client: Anthropic, params: Anthropic.MessageCreateParamsNonStreaming) {
+  if (!takeGapFinderRequest()) return null;
+  return client.messages.create(params);
+}
 
 // Suffixes/keywords/known sweetener names that suggest a synthetic additive
 // worth researching first, plus any digit (E-numbers, INS codes, percentages).
@@ -44,7 +85,7 @@ const ADDITIVE_SIGNAL_RE =
 
 function additivePriority(phrase: string): number {
   const normalized = phrase.trim().toLowerCase();
-  if (LOW_PRIORITY_WHOLE_FOODS.has(normalized)) return -1;
+  if (isObviousNonAdditive(phrase)) return -1;
   if (/\d/.test(normalized)) return 2;
   if (ADDITIVE_SIGNAL_RE.test(normalized)) return 2;
   return 0;
@@ -146,7 +187,7 @@ async function researchUnknownIngredient(ingredientText: string): Promise<Resear
   const client = new Anthropic({ apiKey });
 
   try {
-    const message = await client.messages.create({
+    const message = await sendCountedRequest(client, {
       model: MODEL,
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
@@ -158,6 +199,7 @@ async function researchUnknownIngredient(ingredientText: string): Promise<Resear
       ],
       tools: [WEB_SEARCH_TOOL, SUBMIT_TOOL],
     });
+    if (!message) return { ok: false };
 
     const toolUse = message.content.find(
       (block): block is Anthropic.ToolUseBlock => block.type === "tool_use" && block.name === "submit_suggestion"
@@ -198,8 +240,12 @@ async function researchUnknownIngredient(ingredientText: string): Promise<Resear
 export async function suggestChemicalForIngredient(ingredientText: string): Promise<void> {
   const sourceText = ingredientText.trim();
   if (!sourceText) return;
+  if (!isGapFinderEnabled()) return;
+  if (isObviousNonAdditive(sourceText)) return;
 
   try {
+    if (gapFinderCapReached(new Date())) return;
+
     const alreadyPending = await prisma.suggestedChemical.findFirst({
       where: { sourceIngredientText: { equals: sourceText, mode: "insensitive" } },
       select: { id: true },

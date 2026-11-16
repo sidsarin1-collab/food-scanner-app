@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { scoreIngredientList } from "@/lib/scoring";
-import { suggestChemicalForIngredient, rankIngredientsForResearch } from "@/lib/gapFinder";
+import { suggestChemicalForIngredient, rankIngredientsForResearch, isObviousNonAdditive } from "@/lib/gapFinder";
 
 // Cap per scan so one long ingredient panel can't fan out into a burst of
 // Claude calls -- ranked by rankIngredientsForResearch first, so this budget
@@ -56,7 +56,9 @@ export async function POST(req: Request) {
   // Runs after the response is queued below -- doesn't block the score result.
   // Relies on this being a long-running Node process (Railway), not a
   // serverless function that would be frozen once the response is sent.
-  const rankedUnmatched = rankIngredientsForResearch(result.unmatchedIngredients);
+  const rankedUnmatched = rankIngredientsForResearch(result.unmatchedIngredients).filter(
+    (ingredient) => !isObviousNonAdditive(ingredient)
+  );
   for (const ingredient of rankedUnmatched.slice(0, MAX_GAP_FINDER_CALLS_PER_SCAN)) {
     if (ingredient.length < 3) continue;
     void suggestChemicalForIngredient(ingredient);
