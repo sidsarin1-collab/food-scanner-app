@@ -19,6 +19,8 @@ const NON_ADDITIVE_FOODS = new Set([
   "almonds", "peanuts", "walnuts", "cashews", "pecans",
   "olive oil", "extra virgin olive oil", "coconut oil",
   "pepper", "black pepper", "garlic", "onion", "onions", "cinnamon",
+  // Reviewed as safe and set to not-matchable in the database; never research.
+  "carnauba wax", "citric acid", "sodium citrate", "alpha-tocopherol acetate", "alpha tocopherol acetate",
 ]);
 
 function normalizeFoodPhrase(phrase: string): string {

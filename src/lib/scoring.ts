@@ -7,6 +7,8 @@ export type ChemicalForMatching = {
   healthEffect: string | null;
   bannedInCountries: string | null;
   commonSubstituteNote: string | null;
+  /** False = known word that must never score, but still blocks look-alike matches. Default true. */
+  matchable?: boolean;
 };
 
 export type FlaggedIngredient = {
@@ -155,22 +157,23 @@ function hasConflictingChemicalSuffix(token: string, term: string): boolean {
   return tokenSuffix !== null && termSuffix !== null && tokenSuffix !== termSuffix;
 }
 
-function isFuzzyMatch(token: string, term: string): boolean {
-  if (token.length < 4 || term.length < 4) return false;
+/** Edit distance if `token` is an acceptable typo of `term`, otherwise null. */
+function fuzzyDistance(token: string, term: string): number | null {
+  if (token.length < 4 || term.length < 4) return null;
   // Fuzzy/typo tolerance only makes sense for natural-language words (a
   // missing letter in "Titanium Dioxide" is still clearly that chemical).
   // A numeric regulatory code has no such property: "INS 296" and "INS 250"
   // are two DIFFERENT additives one edit apart, not a typo of each other.
   // Allowing fuzzy matches on digits caused a single "INS 296" mention to
   // cross-match eight unrelated chemicals. Codes must match exactly.
-  if (/\d/.test(term) || /\d/.test(token)) return false;
-  if (hasConflictingChemicalSuffix(token, term)) return false;
+  if (/\d/.test(term) || /\d/.test(token)) return null;
+  if (hasConflictingChemicalSuffix(token, term)) return null;
   const distance = levenshtein(token, term);
   const allowed = term.length <= 6 ? 1 : 2;
-  return distance <= allowed;
+  return distance <= allowed ? distance : null;
 }
 
-type Term = { term: string; chemical: ChemicalForMatching };
+type Term = { term: string; chemical: ChemicalForMatching; scored: boolean };
 
 export function scoreIngredientList(
   ingredientListText: string,
@@ -178,10 +181,11 @@ export function scoreIngredientList(
 ): ScoreResult {
   const terms: Term[] = [];
   for (const chemical of chemicals) {
-    terms.push({ term: normalize(chemical.name), chemical });
+    const scored = chemical.matchable !== false;
+    terms.push({ term: normalize(chemical.name), chemical, scored });
     for (const alias of chemical.aliases) {
       const normAlias = normalize(alias);
-      if (normAlias) terms.push({ term: normAlias, chemical });
+      if (normAlias) terms.push({ term: normAlias, chemical, scored });
     }
   }
 
@@ -198,9 +202,14 @@ export function scoreIngredientList(
     if (!token) continue;
 
     let foundExact = false;
-    for (const { term, chemical } of terms) {
+    let foundKnown = false;
+    for (const { term, chemical, scored } of terms) {
       if (!term) continue;
       if (isExactMatch(token, term)) {
+        if (!scored) {
+          foundKnown = true;
+          continue;
+        }
         foundExact = true;
         if (!matchesByChemical.has(chemical.id)) {
           matchesByChemical.set(chemical.id, {
@@ -214,10 +223,22 @@ export function scoreIngredientList(
     }
 
     let foundFuzzy = false;
-    if (!foundExact) {
-      for (const { term, chemical } of terms) {
-        if (!term) continue;
-        if (isFuzzyMatch(token, term)) {
+    if (!foundExact && !foundKnown) {
+      // A look-alike match to a scored row only counts if it is strictly closer
+      // than any turned-off (known, non-scoring) row -- so "Sodium Citrate" turned
+      // off can't be mistaken for "Sodium Nitrate".
+      let closestKnown = Infinity;
+      for (const { term, scored } of terms) {
+        if (!term || scored) continue;
+        const d = fuzzyDistance(token, term);
+        if (d !== null && d < closestKnown) closestKnown = d;
+      }
+      foundKnown = closestKnown !== Infinity;
+
+      for (const { term, chemical, scored } of terms) {
+        if (!term || !scored) continue;
+        const d = fuzzyDistance(token, term);
+        if (d !== null && d < closestKnown) {
           foundFuzzy = true;
           if (!matchesByChemical.has(chemical.id)) {
             matchesByChemical.set(chemical.id, {
@@ -231,7 +252,7 @@ export function scoreIngredientList(
       }
     }
 
-    if (!foundExact && !foundFuzzy) {
+    if (!foundExact && !foundFuzzy && !foundKnown) {
       const trimmed = rawToken.trim();
       if (trimmed) unmatchedIngredients.add(trimmed);
     }

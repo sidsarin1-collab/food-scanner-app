@@ -40,7 +40,6 @@ export async function POST(req: Request) {
   }
 
   const chemicals = await prisma.chemical.findMany({
-    where: { matchable: true },
     select: {
       id: true,
       name: true,
@@ -50,6 +49,7 @@ export async function POST(req: Request) {
       healthEffect: true,
       bannedInCountries: true,
       commonSubstituteNote: true,
+      matchable: true,
     },
   });
 
