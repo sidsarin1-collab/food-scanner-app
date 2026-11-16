@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import geoip from "geoip-lite";
 import { prisma } from "@/lib/db";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
+import { readJsonWithLimit, tooLong, TEXT_LIMITS } from "@/lib/requestLimits";
 
 const ALLOWED_ACTIONS = new Set(["viewed", "clicked_alternative", "dismissed"]);
 
@@ -20,11 +22,30 @@ function detectLocationFromRequest(req: Request): { country: string | null; city
 }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null);
+  const limit = checkRateLimit("events", req);
+  if (!limit.ok) return rateLimitedResponse("events", limit);
+
+  const parsed = await readJsonWithLimit(req);
+  if (parsed.tooLarge) {
+    return NextResponse.json(
+      { error: "Invalid event" },
+      { status: 413, headers: parsed.fullyRead ? undefined : { Connection: "close" } }
+    );
+  }
+  const body = parsed.body;
 
   const sessionId = typeof body?.sessionId === "string" ? body.sessionId.trim() : "";
   const action = typeof body?.action === "string" ? body.action : "";
   if (!sessionId || !ALLOWED_ACTIONS.has(action)) {
+    return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+  }
+  if (
+    tooLong(sessionId, TEXT_LIMITS.sessionId) ||
+    tooLong(body?.name, TEXT_LIMITS.eventName) ||
+    tooLong(body?.ingredientList, TEXT_LIMITS.ingredientList) ||
+    tooLong(body?.verdictShown, TEXT_LIMITS.verdict) ||
+    tooLong(body?.country, TEXT_LIMITS.country)
+  ) {
     return NextResponse.json({ error: "Invalid event" }, { status: 400 });
   }
 

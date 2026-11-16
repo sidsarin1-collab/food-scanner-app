@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { scoreIngredientList } from "@/lib/scoring";
 import { suggestChemicalForIngredient, rankIngredientsForResearch, isObviousNonAdditive } from "@/lib/gapFinder";
+import { checkRateLimit, rateLimitedResponse } from "@/lib/rateLimit";
+import { readJsonWithLimit, tooLong, TEXT_LIMITS } from "@/lib/requestLimits";
 
 // Cap per scan so one long ingredient panel can't fan out into a burst of
 // Claude calls -- ranked by rankIngredientsForResearch first, so this budget
@@ -11,7 +13,17 @@ import { suggestChemicalForIngredient, rankIngredientsForResearch, isObviousNonA
 const MAX_GAP_FINDER_CALLS_PER_SCAN = 10;
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null);
+  const limit = checkRateLimit("score", req);
+  if (!limit.ok) return rateLimitedResponse("score", limit);
+
+  const parsed = await readJsonWithLimit(req);
+  if (parsed.tooLarge) {
+    return NextResponse.json(
+      { error: "That request is too large." },
+      { status: 413, headers: parsed.fullyRead ? undefined : { Connection: "close" } }
+    );
+  }
+  const body = parsed.body;
   const ingredientList: unknown = body?.ingredientList;
 
   if (typeof ingredientList !== "string" || !ingredientList.trim()) {
@@ -19,6 +31,21 @@ export async function POST(req: Request) {
       { error: "ingredientList is required" },
       { status: 400 }
     );
+  }
+  if (tooLong(ingredientList, TEXT_LIMITS.ingredientList)) {
+    return NextResponse.json(
+      { error: `That ingredient list is too long (max ${TEXT_LIMITS.ingredientList.toLocaleString("en-US")} characters).` },
+      { status: 400 }
+    );
+  }
+  if (tooLong(body?.name, TEXT_LIMITS.name)) {
+    return NextResponse.json({ error: `Product name is too long (max ${TEXT_LIMITS.name} characters).` }, { status: 400 });
+  }
+  if (tooLong(body?.brand, TEXT_LIMITS.brand)) {
+    return NextResponse.json({ error: `Brand is too long (max ${TEXT_LIMITS.brand} characters).` }, { status: 400 });
+  }
+  if (tooLong(body?.country, TEXT_LIMITS.country)) {
+    return NextResponse.json({ error: `Country is too long (max ${TEXT_LIMITS.country} characters).` }, { status: 400 });
   }
 
   const chemicals = await prisma.chemical.findMany({
