@@ -16,7 +16,9 @@ export const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
 export const PHOTO_BODY_MAX_BYTES = PHOTO_MAX_BYTES + 64 * 1024;
 export const PHOTO_DRAIN_BYTES = 20 * 1024 * 1024;
 
-export type BodyResult = { ok: true; bytes: Uint8Array<ArrayBuffer> } | { ok: false; fullyRead: boolean };
+export type BodyResult =
+  | { ok: true; bytes: Uint8Array<ArrayBuffer> }
+  | { ok: false; fullyRead: boolean; receivedBytes: number };
 
 /**
  * Reads a request body, counting the bytes that actually arrive (never the declared size).
@@ -36,7 +38,7 @@ export async function readBodyWithLimit(req: Request, maxBytes: number, drainExt
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > maxBytes + drainExtraBytes) return { ok: false, fullyRead: false };
+    if (total > maxBytes + drainExtraBytes) return { ok: false, fullyRead: false, receivedBytes: total };
     if (total > maxBytes) {
       tooLarge = true;
       chunks = [];
@@ -44,7 +46,7 @@ export async function readBodyWithLimit(req: Request, maxBytes: number, drainExt
     }
     chunks.push(value);
   }
-  if (tooLarge) return { ok: false, fullyRead: true };
+  if (tooLarge) return { ok: false, fullyRead: true, receivedBytes: total };
   const bytes = new Uint8Array(total);
   let offset = 0;
   for (const chunk of chunks) {

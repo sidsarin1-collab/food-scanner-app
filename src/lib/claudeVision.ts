@@ -6,9 +6,14 @@ const EXTRACTION_PROMPT = `This is a photo of a food product's ingredient panel.
 
 If you cannot find or clearly read an ingredient list in this image, respond with exactly: NO_INGREDIENTS_FOUND`;
 
+// Reading a label normally takes 2-8 seconds. Each attempt gets 20 seconds and
+// one retry, so the worst case (about 41s) still ends just before the page's 45s timeout.
+const ATTEMPT_TIMEOUT_MS = 20_000;
+const MAX_RETRIES = 1;
+
 export type ExtractionResult =
   | { ok: true; text: string }
-  | { ok: false; reason: "not_found" | "api_error" };
+  | { ok: false; reason: "not_found" | "api_error" | "timeout" };
 
 export async function extractIngredientsFromImage(
   base64Data: string,
@@ -22,22 +27,25 @@ export async function extractIngredientsFromImage(
   const client = new Anthropic({ apiKey });
 
   try {
-    const message = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: { type: "base64", media_type: mediaType, data: base64Data },
-            },
-            { type: "text", text: EXTRACTION_PROMPT },
-          ],
-        },
-      ],
-    });
+    const message = await client.messages.create(
+      {
+        model: MODEL,
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: { type: "base64", media_type: mediaType, data: base64Data },
+              },
+              { type: "text", text: EXTRACTION_PROMPT },
+            ],
+          },
+        ],
+      },
+      { timeout: ATTEMPT_TIMEOUT_MS, maxRetries: MAX_RETRIES }
+    );
 
     const textBlock = message.content.find((block) => block.type === "text");
     const text = textBlock && textBlock.type === "text" ? textBlock.text.trim() : "";
@@ -47,6 +55,9 @@ export async function extractIngredientsFromImage(
     }
     return { ok: true, text };
   } catch (err) {
+    if (err instanceof Anthropic.APIConnectionTimeoutError) {
+      return { ok: false, reason: "timeout" };
+    }
     console.error("Claude vision extraction failed:", err);
     return { ok: false, reason: "api_error" };
   }

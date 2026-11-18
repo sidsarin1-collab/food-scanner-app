@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { CATEGORIES, type Category } from "@/lib/categories";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/lib/countries";
 import { trackEvent } from "@/lib/analytics";
+import { submitPhoto, submitScore } from "@/lib/clientErrors";
 
 type FlaggedIngredient = {
   ingredientText: string;
@@ -177,18 +178,17 @@ export default function ScannerForm() {
     setPhotoError(null);
     setShowPhotoNotice(false);
     try {
-      const formData = new FormData();
-      formData.append("photo", file);
-      const res = await fetch("/api/scan-photo", { method: "POST", body: formData });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(body.error || "Couldn't read that photo");
+      // submitPhoto always settles (success, a clear message, or a 45s timeout), so the spinner can't get stuck.
+      const outcome = await submitPhoto(file);
+      if (outcome.ok) {
+        setIngredientList(outcome.text);
+        setShowPhotoNotice(true);
+        setResult(null);
+      } else {
+        setPhotoError(outcome.message);
       }
-      setIngredientList(body.ingredientText);
-      setShowPhotoNotice(true);
-      setResult(null);
-    } catch (err) {
-      setPhotoError(err instanceof Error ? err.message : "Couldn't read that photo");
+    } catch {
+      setPhotoError("Something went wrong reading that photo. Please try again, or paste the ingredient text instead.");
     } finally {
       setPhotoLoading(false);
     }
@@ -203,26 +203,22 @@ export default function ScannerForm() {
     setAltState("idle");
     setAlternatives([]);
     try {
-      const res = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ingredientList,
-          name,
-          brand,
-          country: COUNTRIES.find((c) => c.offTag === country)?.label,
-        }),
+      const outcome = await submitScore<ScoreResult>({
+        ingredientList,
+        name,
+        brand,
+        country: COUNTRIES.find((c) => c.offTag === country)?.label,
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Something went wrong");
+      if (outcome.ok) {
+        const data = outcome.data;
+        setResult(data);
+        const countryLabel = COUNTRIES.find((c) => c.offTag === country)?.label;
+        trackEvent({ action: "viewed", name, ingredientList, verdictShown: data.verdict, country: countryLabel });
+      } else {
+        setError(outcome.message);
       }
-      const data: ScoreResult = await res.json();
-      setResult(data);
-      const countryLabel = COUNTRIES.find((c) => c.offTag === country)?.label;
-      trackEvent({ action: "viewed", name, ingredientList, verdictShown: data.verdict, country: countryLabel });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+    } catch {
+      setError("Something went wrong on our end. Please try again in a moment.");
     } finally {
       setLoading(false);
     }
